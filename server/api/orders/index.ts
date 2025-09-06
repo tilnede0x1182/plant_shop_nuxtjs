@@ -1,30 +1,29 @@
-// # Importations
 import { PrismaClient } from "@prisma/client";
 import { defineEventHandler, readBody, sendError, createError } from "h3";
-import { getServerSession } from "#auth";
+// import { requireUserSession } from "nuxt-auth-utils";
 
-// # Données
 const prisma = new PrismaClient();
 
-// # Handler principal
 export default defineEventHandler(async (event) => {
 	if (event.node.req.method === "GET") {
-		const session = await getServerSession(event);
-		if (!session?.user?.id) {
-			return sendError(event, createError({ statusCode: 401, statusMessage: "Unauthorized" }));
-		}
-		const userId = Number(session.user.id);
-		return await prisma.order.findMany({
+		const { user } = await requireUserSession(event);
+		const userId = Number(user.id);
+
+		return prisma.order.findMany({
 			where: { userId },
 			include: { orderItems: { include: { plant: true } } },
 		});
 	}
 
 	if (event.node.req.method === "POST") {
-		const { items, userId } = await readBody(event);
-		if (!Array.isArray(items) || typeof userId !== "number") {
-			return sendError(event, createError({ statusCode: 400, statusMessage: "Invalid payload" }));
+		const { user } = await requireUserSession(event);
+		const userId = Number(user.id);
+
+		const { items } = await readBody<{ items: { plant_id: number; quantity: number }[] }>(event);
+		if (!Array.isArray(items) || !items.length) {
+			return sendError(event, createError({ statusCode: 400, statusMessage: "Données invalides" }));
 		}
+
 		let total = 0;
 		const order = await prisma.order.create({ data: { userId, status: "confirmed", totalPrice: 0 } });
 		for (const item of items) {
@@ -34,10 +33,8 @@ export default defineEventHandler(async (event) => {
 			}
 			total += plant.price * item.quantity;
 			await prisma.plant.update({ where: { id: plant.id }, data: { stock: plant.stock - item.quantity } });
-			await prisma.orderItem.create({
-				data: { orderId: order.id, plantId: plant.id, quantity: item.quantity },
-			});
+			await prisma.orderItem.create({ data: { orderId: order.id, plantId: plant.id, quantity: item.quantity } });
 		}
-		return await prisma.order.update({ where: { id: order.id }, data: { totalPrice: total } });
+		return prisma.order.update({ where: { id: order.id }, data: { totalPrice: total } });
 	}
 });

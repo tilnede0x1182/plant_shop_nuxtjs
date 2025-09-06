@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const count = ref(0)
 
@@ -14,7 +14,25 @@ function loadCartCount() {
 	}
 }
 
-onMounted(loadCartCount)
+// Handler pour l'événement storage pour détecter les changements du panier
+function handleStorageChange(event: StorageEvent) {
+    if (event.key === 'cart') {
+        loadCartCount();
+    }
+}
+
+onMounted(() => {
+    loadCartCount();
+    window.addEventListener('storage', handleStorageChange);
+
+    // Écouter un événement personnalisé pour les mises à jour du panier
+    window.addEventListener('cart-updated', loadCartCount);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener('cart-updated', loadCartCount);
+});
 </script>
 
 <template>

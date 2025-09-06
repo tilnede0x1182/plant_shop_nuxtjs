@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from '#app'
+
 
 const router = useRouter()
 const form = ref({ name: '', price: 0, description: '', stock: 0 })

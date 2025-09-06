@@ -1,21 +1,13 @@
-// # Importations
-import { getServerSession } from "#auth";
 import { defineEventHandler, sendRedirect } from "h3";
+// import { requireUserSession } from "nuxt-auth-utils";
 
-// # Middleware global
 export default defineEventHandler(async (event) => {
-	const url = event.node.req.url || "";
+	const url = new URL(event.node.req.url || "/", `http://${event.node.req.headers.host || "localhost"}`);
+	const { pathname } = url;
 
-	// Protéger uniquement /admin
-	if (url.startsWith("/admin")) {
-		const session = await getServerSession(event);
-		const user = session?.user as { admin?: boolean } | undefined;
-
-		if (!user) {
-			return sendRedirect(event, "/auth/signin");
-		}
-		if (!user.admin) {
-			return sendRedirect(event, "/unauthorized");
-		}
+	// Protéger toute la zone admin (pages + API)
+	if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+		const { user } = await requireUserSession(event); // 401 si non connecté
+		if (!user?.admin) return sendRedirect(event, "/auth/unauthorized", 302);
 	}
 });
