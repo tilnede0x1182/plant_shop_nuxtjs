@@ -17,7 +17,7 @@ onMounted(() => {
 
 <template>
 	<div class="container mt-4">
-		<h1>🛒 Mon Panier</h1>
+		<h1 class="text-center">🛒 Mon Panier</h1>
 		<div v-if="!Object.keys(cart).length" class="alert alert-info mt-3">Votre panier est vide.</div>
 		<table v-else class="table mt-3">
 			<thead class="table-light">
