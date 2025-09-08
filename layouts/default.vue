@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// Définit le <title> global centralisé pour tout le site
+useHead({ title: "Magasin de Plantes" });
 </script>
 
 <template>

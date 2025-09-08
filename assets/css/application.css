@@ -1,15 +1,18 @@
-/* Couleur personnalisée de la navbar – comme les projets d'exemple */
+/* Couleurs navbar */
 .custom-navbar {
-	background-color: #1d8038;
+  background-color: #1d8038;
 }
 
-/* Option explicite pour la lisibilité des textes dans la navbar */
-.custom-navbar .navbar-brand,
-.custom-navbar .nav-link {
-	color: #fff;
+/* Liens “outline” : contour et texte */
+.custom-navbar .btn-outline-light {
+  color: #fff;
+  border-color: #77b388; /* vert clair contrasté */
 }
-.custom-navbar .nav-link:hover,
-.custom-navbar .nav-link:focus {
-	color: #fff;
-	opacity: .85;
+
+/* Hover/Focus : fond vert clair, texte foncé */
+.custom-navbar .btn-outline-light:hover,
+.custom-navbar .btn-outline-light:focus {
+  background-color: #77b388;
+  color: #1d8038;
+  border-color: #77b388;
 }

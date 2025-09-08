@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { addToCart } from "@/composables/useCart"; // utilise la logique unique
+import { ref, onMounted, computed } from "vue";
+import { addToCart } from "@/composables/useCart";
 
 type Plant = { id: number; name: string; price: number; stock: number };
 

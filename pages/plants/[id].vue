@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from '#app'
-import { addToCart } from '@/composables/useCart' // remplace la logique dupliquée
+import { addToCart } from '@/composables/useCart'
 
 const route = useRoute()
 const router = useRouter()

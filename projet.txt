@@ -5,6 +5,9 @@
 ├── app
 ├── app.html
 ├── app.vue
+├── assets
+│   └── css
+│       └── application.css
 ├── components
 │   ├── CartWidget.vue
 │   ├── FlashMessages.vue
@@ -92,7 +95,7 @@
 ├── tsconfig.seed.json
 └── users.txt
 
-31 directories, 59 files
+33 directories, 60 files
 
 # CONFIG
 #
@@ -141,6 +144,7 @@ export default defineNuxtConfig({
 	compatibilityDate: "2025-07-15",
 	modules: ["nuxt-auth-utils"],
 	devtools: { enabled: true },
+	css: ["~/assets/css/application.css"],
 	app: {
 		head: {
 			link: [{ rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" }],
@@ -274,6 +278,25 @@ NUXT_SESSION_PASSWORD=a6d4f3b2c1hjkhkhkjhjkhe5d7a9f0b1c2d3e4f5061728394a5b6chkjh
 
 {
 	"extends": "./.nuxt/tsconfig.json"
+}
+
+
+## assets/css/application.css
+
+/* Couleur personnalisée de la navbar – comme les projets d'exemple */
+.custom-navbar {
+	background-color: #1d8038;
+}
+
+/* Option explicite pour la lisibilité des textes dans la navbar */
+.custom-navbar .navbar-brand,
+.custom-navbar .nav-link {
+	color: #fff;
+}
+.custom-navbar .nav-link:hover,
+.custom-navbar .nav-link:focus {
+	color: #fff;
+	opacity: .85;
 }
 
 
@@ -431,19 +454,14 @@ const alert = ref("");
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { computeCartCount } from '@/composables/useCart'
 
 const count = ref(0)
 
 function loadCartCount() {
-	try {
-		const cart = JSON.parse(localStorage.getItem('cart') || '{}')
-		count.value = Array.isArray(cart)
-			? cart.reduce((t, i) => t + (i.quantity || 0), 0)
-			: Object.values(cart).reduce((t: number, i: any) => t + (i.quantity || 0), 0)
-	} catch {
-		count.value = 0
-	}
+	count.value = computeCartCount()
 }
+
 
 // Handler pour l'événement storage pour détecter les changements du panier
 function handleStorageChange(event: StorageEvent) {
@@ -480,21 +498,13 @@ onUnmounted(() => {
 
 <script setup lang="ts">
 const { loggedIn, user, clear } = useUserSession();
-
-// --- Compteur panier (même logique que le modèle Next) ----------------------
 import { ref, onMounted, onUnmounted } from "vue";
+import { computeCartCount } from "@/composables/useCart"; // calcule DRY du compteur
 
 const cartCount = ref<number>(0);
 
 function updateCartCount() {
-	try {
-		const raw = localStorage.getItem("cart") || "{}";
-		const cart = JSON.parse(raw);
-		const total = Array.isArray(cart) ? cart.reduce((t, i) => t + (i.quantity || 0), 0) : Object.values(cart).reduce((t: number, i: any) => t + (i.quantity || 0), 0);
-		cartCount.value = total;
-	} catch {
-		cartCount.value = 0;
-	}
+	cartCount.value = computeCartCount();
 }
 
 onMounted(() => {
@@ -502,11 +512,11 @@ onMounted(() => {
 	window.addEventListener("storage", updateCartCount);
 	window.addEventListener("cart-updated", updateCartCount);
 });
+
 onUnmounted(() => {
 	window.removeEventListener("storage", updateCartCount);
 	window.removeEventListener("cart-updated", updateCartCount);
 });
-// ---------------------------------------------------------------------------
 
 async function logout() {
 	await $fetch("/api/auth/logout", { method: "POST" });
@@ -517,21 +527,26 @@ async function logout() {
 </script>
 
 <template>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+	<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
 		<div class="container">
-			<NuxtLink class="navbar-brand" to="/">PlantShop</NuxtLink>
+			<NuxtLink class="navbar-brand" to="/">🌿 PlantShop</NuxtLink>
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 
 			<div class="collapse navbar-collapse" id="navbarNav">
 				<ul class="navbar-nav ms-auto">
+					<template v-if="loggedIn">
+						<li class="nav-item d-flex align-items-center text-white me-3">
+							{{ user?.name }}
+							<span v-if="user?.admin">&nbsp;(Administrateur)</span>
+						</li>
+					</template>
 					<li class="nav-item">
 						<NuxtLink class="nav-link" to="/cart" id="cart-link">
-							Panier<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+							Mon Panier<span v-if="cartCount > 0"> ({{ cartCount }})</span>
 						</NuxtLink>
 					</li>
-
 					<template v-if="loggedIn">
 						<li class="nav-item">
 							<NuxtLink class="nav-link" to="/orders">Mes Commandes</NuxtLink>
@@ -553,10 +568,10 @@ async function logout() {
 
 					<template v-else>
 						<li class="nav-item">
-							<NuxtLink class="nav-link" to="/auth/signin">Connexion</NuxtLink>
+							<NuxtLink class="nav-link" to="/auth/register">S'inscrire</NuxtLink>
 						</li>
 						<li class="nav-item">
-							<NuxtLink class="nav-link" to="/auth/register">Inscription</NuxtLink>
+							<NuxtLink class="nav-link" to="/auth/signin">Se connecter</NuxtLink>
 						</li>
 					</template>
 				</ul>
@@ -795,6 +810,7 @@ export default defineNuxtConfig({
 	compatibilityDate: "2025-07-15",
 	modules: ["nuxt-auth-utils"],
 	devtools: { enabled: true },
+	css: ["~/assets/css/application.css"],
 	app: {
 		head: {
 			link: [{ rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" }],
@@ -1090,8 +1106,9 @@ async function handleSubmit() {
 ## pages/plants/[id].vue
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from '#app'
+import { addToCart } from '@/composables/useCart'
 
 const route = useRoute()
 const router = useRouter()
@@ -1111,24 +1128,6 @@ async function deletePlant() {
   router.push('/plants')
 }
 
-function addToCart() {
-  if (!plant.value) return
-
-  let cart: Record<number, any>
-  try {
-    cart = JSON.parse(localStorage.getItem('cart') || '{}')
-  } catch {
-    cart = {}
-  }
-
-  const id = plant.value.id
-  cart[id] = cart[id]
-    ? { ...cart[id], quantity: cart[id].quantity + 1 }
-    : { id: plant.value.id, name: plant.value.name, price: plant.value.price, quantity: 1 }
-
-  localStorage.setItem('cart', JSON.stringify(cart))
-  window.dispatchEvent(new Event('cart-updated'))
-}
 </script>
 
 <template>
@@ -1139,7 +1138,7 @@ function addToCart() {
     <p v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }}</p>
 
     <div class="mt-3">
-      <button class="btn btn-success me-2" @click="addToCart">Ajouter au panier</button>
+      <button class="btn btn-success me-2" @click="addToCart(plant)">Ajouter au panier</button>
       <NuxtLink v-if="isAdmin" :to="`/plants/${plant.id}/edit`" class="btn btn-warning me-2">Modifier</NuxtLink>
       <button v-if="isAdmin" class="btn btn-danger" @click="deletePlant">Supprimer</button>
     </div>
@@ -1150,41 +1149,41 @@ function addToCart() {
 ## pages/plants/index.vue
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from "vue";
+import { addToCart } from "@/composables/useCart";
 
-type Plant = { id: number; name: string; price: number; stock: number }
+type Plant = { id: number; name: string; price: number; stock: number };
 
-const plants = ref<Plant[]>([])
-const { user, loggedIn } = useUserSession()
-const isAdmin = computed(() => !!(loggedIn.value && user.value?.admin))
+const plants = ref<Plant[]>([]);
+const { user, loggedIn } = useUserSession();
+const isAdmin = computed(() => !!(loggedIn.value && user.value?.admin));
 
 onMounted(async () => {
-  plants.value = await $fetch('/api/plants')
-})
+	plants.value = await $fetch("/api/plants");
+});
 </script>
 
 <template>
-  <div class="container mt-4">
-    <h1 class="mb-4">Liste des Plantes</h1>
-    <NuxtLink v-if="isAdmin" to="/admin/plants/new" class="btn btn-success mb-3">
-      Nouvelle Plante
-    </NuxtLink>
-    <div class="row">
-      <div v-for="plant in plants" :key="plant.id" class="col-md-4">
-        <div class="card mb-3 shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">
-              <NuxtLink :to="`/plants/${plant.id}`" class="text-decoration-none text-dark">
-                {{ plant.name }}
-              </NuxtLink>
-            </h5>
-            <p><strong>Prix :</strong> {{ plant.price }} €</p>
-            <p v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+	<div class="container mt-4">
+		<h1 class="mb-4 text-center">🌿 Liste des Plantes</h1>
+		<NuxtLink v-if="isAdmin" to="/admin/plants/new" class="btn btn-success mb-3"> Nouvelle Plante </NuxtLink>
+		<div class="row">
+			<div v-for="plant in plants" :key="plant.id" class="col-md-4">
+				<div class="card mb-3 shadow-sm">
+					<div class="card-body">
+						<h5 class="card-title">
+							<NuxtLink :to="`/plants/${plant.id}`" class="text-decoration-none text-dark">
+								{{ plant.name }}
+							</NuxtLink>
+						</h5>
+						<p class="mb-0"><strong>Prix :</strong> {{ plant.price }} €</p>
+						<p class="mb-0" v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }} unité<span v-if="plant.stock > 1">s</span></p>
+						<button class="btn btn-success w-100 mt-2" @click="addToCart(plant)">Ajouter au panier</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 
@@ -1284,35 +1283,33 @@ async function handleSubmit() {
 ## pages/orders/index.vue
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
 
-type OrderItem = { id: number; quantity: number; plant: { id: number; name: string; price: number } }
-type Order = { id: number; createdAt: string; totalPrice: number; status: string; orderItems: OrderItem[] }
+type OrderItem = { id: number; quantity: number; plant: { id: number; name: string; price: number } };
+type Order = { id: number; createdAt: string; totalPrice: number; status: string; orderItems: OrderItem[] };
 
-const orders = ref<Order[]>([])
+const orders = ref<Order[]>([]);
 
 onMounted(async () => {
-	orders.value = await $fetch('/api/orders').catch(() => [])
-})
+	orders.value = await $fetch("/api/orders").catch(() => []);
+});
 </script>
 
 <template>
 	<div class="container mt-4">
-		<h1>📜 Mes Commandes</h1>
-		<div v-if="!orders.length" class="alert alert-info mt-3">
-			Aucune commande pour le moment.
-		</div>
+		<h1 class="text-center mb-4">📜 Mes Commandes</h1>
+		<div v-if="!orders.length" class="alert alert-info">Aucune commande pour le moment.</div>
 		<div v-for="(order, index) in orders" :key="order.id" class="card mb-3 shadow-sm">
 			<div class="card-body">
 				<h5 class="card-title">Commande n°{{ orders.length - index }}</h5>
-				<p class="text-muted">Passée le {{ new Date(order.createdAt).toLocaleString() }}</p>
-				<ul>
+				<p class="mb-1 text-muted">Passée le {{ new Date(order.createdAt).toLocaleString() }} – Total : {{ order.totalPrice }} €</p>
+
+				<ul class="mb-2">
 					<li v-for="item in order.orderItems" :key="item.id">
-						<NuxtLink :to="`/plants/${item.plant.id}`">{{ item.plant.name }}</NuxtLink>
-						– {{ item.quantity }} × {{ item.plant.price }} €
+						<NuxtLink :to="`/plants/${item.plant.id}`" class="text-decoration-none text-primary">{{ item.plant.name }}</NuxtLink>
+						{{ item.quantity }} × {{ item.plant.price }} €
 					</li>
 				</ul>
-				<p><strong>Total :</strong> {{ order.totalPrice }} €</p>
 				<p><strong>Statut :</strong> {{ order.status }}</p>
 			</div>
 		</div>
@@ -1418,41 +1415,26 @@ await navigateTo('/plants')
 ## pages/cart.vue
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
+import { loadCart, removeFromCart } from "@/composables/useCart";
 
-type CartItem = { id: number; name: string; price: number; quantity: number; stock: number }
-const cart = ref<Record<number, CartItem>>({})
-
-function loadCart() {
-	try {
-		return JSON.parse(localStorage.getItem('cart') || '{}')
-	} catch {
-		return {}
-	}
-}
-
-function saveCart(c: Record<number, CartItem>) {
-	localStorage.setItem('cart', JSON.stringify(c))
-	cart.value = c
-}
+type CartItem = { id: number; name: string; price: number; quantity: number; stock: number };
+const cart = ref<Record<number, CartItem>>({});
 
 function removeItem(id: number) {
-	const c = { ...cart.value }
-	delete c[id]
-	saveCart(c)
+	removeFromCart(id);
+	cart.value = loadCart();
 }
 
 onMounted(() => {
-	cart.value = loadCart()
-})
+	cart.value = loadCart();
+});
 </script>
 
 <template>
 	<div class="container mt-4">
-		<h1>🛒 Mon Panier</h1>
-		<div v-if="!Object.keys(cart).length" class="alert alert-info mt-3">
-			Votre panier est vide.
-		</div>
+		<h1 class="text-center">🛒 Mon Panier</h1>
+		<div v-if="!Object.keys(cart).length" class="alert alert-info mt-3">Votre panier est vide.</div>
 		<table v-else class="table mt-3">
 			<thead class="table-light">
 				<tr>
@@ -1673,22 +1655,62 @@ async function handleSubmit() {
 
 ## composables/useCart.ts
 
-// composables/useCart.ts
+// # Importations
+
+// # Données
+const STORAGE_KEY = "cart";
+
+// # Fonctions utilitaires
 /**
- * Ajout d'une plante au panier localStorage + évènement cart-updated.
- * @param plant objet plante (id, name, price, ...)
- */
-export function addToCart(plant: { id: number; name: string; price: number }) {
-	let cart: Record<number, any>;
+  Lit le panier depuis localStorage.
+  @return objet panier indexé par id
+*/
+export function loadCart(): Record<number, any> {
 	try {
-		cart = JSON.parse(localStorage.getItem("cart") || "{}");
+		return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
 	} catch {
-		cart = {};
+		return {};
 	}
+}
+
+/**
+  Sauvegarde le panier et émet l'événement global.
+  @cart panier à persister
+*/
+export function saveCart(cart: Record<number, any>): void {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+	window.dispatchEvent(new Event("cart-updated"));
+}
+
+/**
+  Calcule le nombre total d'articles.
+  @return total quantités
+*/
+export function computeCartCount(): number {
+	const cart = loadCart();
+	return Array.isArray(cart) ? cart.reduce((total, item) => total + (item?.quantity || 0), 0) : Object.values(cart).reduce((total: number, item: any) => total + (item?.quantity || 0), 0);
+}
+
+// # Fonctions principales
+/**
+  Ajoute une plante au panier (ou incrémente sa quantité).
+  @plant objet { id, name, price }
+*/
+export function addToCart(plant: { id: number; name: string; price: number }): void {
+	const cart = loadCart();
 	const id = plant.id;
 	cart[id] = cart[id] ? { ...cart[id], quantity: cart[id].quantity + 1 } : { id: plant.id, name: plant.name, price: plant.price, quantity: 1 };
-	localStorage.setItem("cart", JSON.stringify(cart));
-	window.dispatchEvent(new Event("cart-updated"));
+	saveCart(cart);
+}
+
+/**
+  Retire un article du panier.
+  @id identifiant plante
+*/
+export function removeFromCart(id: number): void {
+	const cart = loadCart();
+	delete cart[id];
+	saveCart(cart);
 }
 
 
@@ -2156,6 +2178,7 @@ export default defineEventHandler(async (event) => {
 # Liste des parties
 #
       1 ## app.vue
+      1 ## assets
       4 ## components
       1 ## composables
       1 ## Development Server
