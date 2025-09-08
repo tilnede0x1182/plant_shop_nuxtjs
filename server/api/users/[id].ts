@@ -1,6 +1,7 @@
 // # Importations
 import { PrismaClient } from "@prisma/client";
 import { defineEventHandler, readBody, sendError, createError } from "h3";
+// import { getUserSession, setUserSession } from "nuxt-auth-utils";
 
 // # Données
 const prisma = new PrismaClient();
@@ -18,7 +19,23 @@ export default defineEventHandler(async (event) => {
 
 	if (event.node.req.method === "PUT") {
 		const data = await readBody(event);
-		return await prisma.user.update({ where: { id }, data });
+		const updated = await prisma.user.update({ where: { id }, data });
+
+		// Mise à jour de la session si c'est l'utilisateur connecté
+		const session = await getUserSession(event); // auto-import
+		if (session?.user?.id && Number(session.user.id) === id) {
+			await setUserSession(event, {
+				// auto-import
+				...session,
+				user: {
+					id: String(updated.id),
+					email: updated.email,
+					name: updated.name ?? null,
+					admin: updated.admin,
+				},
+			});
+		}
+		return updated;
 	}
 
 	if (event.node.req.method === "DELETE") {

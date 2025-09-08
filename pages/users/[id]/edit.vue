@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
+const { user } = useUserSession();
 
 
 const route = useRoute()
@@ -16,13 +17,17 @@ onMounted(async () => {
 })
 
 async function handleSubmit() {
-	const res = await $fetch(`/api/users/${route.params.id}`, {
-		method: 'PUT',
-		body: form.value
-	}).catch(async (err) => {
-		errors.value = [err.message]
-	})
-	if (!errors.value.length) router.push(`/users/${route.params.id}`)
+  const res = await $fetch(`/api/users/${route.params.id}`, {
+    method: 'PUT',
+    body: form.value
+  }).catch((err) => {
+    errors.value = [err.message]
+  })
+  if (!errors.value.length) {
+    // Redirection puis rechargement
+    await router.push(`/users/${route.params.id}`);
+    if (typeof window !== "undefined") window.location.reload();
+  }
 }
 </script>
 

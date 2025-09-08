@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
-
+const { user } = useUserSession();
 
 const route = useRoute()
 const router = useRouter()
@@ -13,8 +13,18 @@ onMounted(async () => {
 })
 
 async function handleSubmit() {
-	await $fetch(`/api/users/${route.params.id}`, { method: 'PUT', body: form.value })
-	router.push(`/admin/users/${route.params.id}`)
+  await $fetch(`/api/users/${route.params.id}`, { method: 'PUT', body: form.value })
+
+  // Mise à jour locale si l'admin modifie son propre compte
+  if (user.value && Number(user.value.id) === Number(route.params.id)) {
+    user.value = {
+      ...user.value,
+      name: form.value.name || null,
+      email: form.value.email,
+      admin: !!form.value.admin
+    }
+  }
+  router.push(`/admin/users/${route.params.id}`)
 }
 </script>
 

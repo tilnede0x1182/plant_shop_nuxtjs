@@ -25,14 +25,14 @@
 │   ├── admin
 │   │   ├── plants
 │   │   │   ├── [id]
-│   │   │   │   └── edit.vue
-│   │   │   ├── [id].vue
+│   │   │   │   ├── edit.vue
+│   │   │   │   └── index.vue
 │   │   │   ├── index.vue
 │   │   │   └── new.vue
 │   │   └── users
 │   │       ├── [id]
-│   │       │   └── edit.vue
-│   │       ├── [id].vue
+│   │       │   ├── edit.vue
+│   │       │   └── index.vue
 │   │       └── index.vue
 │   ├── auth
 │   │   ├── register.vue
@@ -46,14 +46,14 @@
 │   │   └── new.vue
 │   ├── plants
 │   │   ├── [id]
-│   │   │   └── edit.vue
-│   │   ├── [id].vue
+│   │   │   ├── edit.vue
+│   │   │   └── index.vue
 │   │   ├── index.vue
 │   │   └── new.vue
 │   └── users
-│       ├── [id]
-│       │   └── edit.vue
-│       └── [id].vue
+│       └── [id]
+│           ├── edit.vue
+│           └── index.vue
 ├── prisma
 │   ├── migrations
 │   │   ├── 20250906011224_init
@@ -181,15 +181,23 @@ NUXT_SESSION_PASSWORD=a6d4f3b2c1hjkhkhkjhjkhe5d7a9f0b1c2d3e4f5061728394a5b6chkjh
 
 # Lancer en mode développement
 run:
-	NITRO_PORT=3150 NITRO_PORT=3150 npm run dev
+	NITRO_PORT=3150 npm run dev
+# 	NITRO_PORT=3150 npm start
+
+seed:
+	npx prisma db seed
 
 # Builder le projet (production build)
-build:
-	npm run build
-
-# Lancer en mode production (après build)
 prod:
-	NITRO_PORT=3150 npm run start
+	npm run build && NITRO_PORT=3100 npm start
+
+typage:
+	npx vue-tsc --noEmit
+
+lint:
+	npm run lint
+
+typage_lint: lint typage
 
 
 ## prisma/schema.prisma
@@ -846,46 +854,6 @@ useHead({ title: "Magasin de Plantes" });
 </template>
 
 
-## pages/admin/plants/[id].vue
-
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from '#app'
-
-
-/**
- * Détail plante côté admin
- * Affiche et permet suppression
- * @plant ressource chargée
- */
-const route = useRoute()
-const router = useRouter()
-const plant = ref<any>(null)
-
-onMounted(async () => {
-	plant.value = await $fetch(`/api/plants/${route.params.id}`)
-})
-
-async function deletePlant() {
-	if (!confirm('Supprimer cette plante ?')) return
-	await $fetch(`/api/admin/plants/${route.params.id}`, { method: 'DELETE' })
-	router.push('/admin/plants')
-}
-</script>
-
-<template>
-	<div v-if="plant" class="container mt-4">
-		<h1>{{ plant.name }}</h1>
-		<p><strong>Prix :</strong> {{ plant.price }} €</p>
-		<p><strong>Stock :</strong> {{ plant.stock }}</p>
-		<div class="mt-3">
-			<NuxtLink :to="`/admin/plants/${plant.id}/edit`" class="btn btn-warning me-2">Modifier</NuxtLink>
-			<button class="btn btn-danger" @click="deletePlant">Supprimer</button>
-		</div>
-	</div>
-</template>
-
-
 ## pages/admin/plants/index.vue
 
 <script setup lang="ts">
@@ -1000,27 +968,42 @@ async function handleSubmit() {
 </template>
 
 
-## pages/admin/users/[id].vue
+## pages/admin/plants/[id]/index.vue
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from '#app'
 
+
+/**
+ * Détail plante côté admin
+ * Affiche et permet suppression
+ * @plant ressource chargée
+ */
 const route = useRoute()
-const user = ref<any>(null)
+const router = useRouter()
+const plant = ref<any>(null)
 
 onMounted(async () => {
-	user.value = await $fetch(`/api/users/${route.params.id}`)
+	plant.value = await $fetch(`/api/plants/${route.params.id}`)
 })
+
+async function deletePlant() {
+	if (!confirm('Supprimer cette plante ?')) return
+	await $fetch(`/api/admin/plants/${route.params.id}`, { method: 'DELETE' })
+	router.push('/admin/plants')
+}
 </script>
 
 <template>
-	<div v-if="user" class="container mt-4">
-		<h1>Détails Utilisateur</h1>
-		<p><strong>Email :</strong> {{ user.email }}</p>
-		<p><strong>Nom :</strong> {{ user.name || '-' }}</p>
-		<p><strong>Administrateur :</strong> {{ user.admin ? 'Oui' : 'Non' }}</p>
-		<NuxtLink :to="`/admin/users/${user.id}/edit`" class="btn btn-warning mt-3">Modifier</NuxtLink>
+	<div v-if="plant" class="container mt-4">
+		<h1>{{ plant.name }}</h1>
+		<p><strong>Prix :</strong> {{ plant.price }} €</p>
+		<p><strong>Stock :</strong> {{ plant.stock }}</p>
+		<div class="mt-3">
+			<NuxtLink :to="`/admin/plants/${plant.id}/edit`" class="btn btn-warning me-2">Modifier</NuxtLink>
+			<button class="btn btn-danger" @click="deletePlant">Supprimer</button>
+		</div>
 	</div>
 </template>
 
@@ -1088,7 +1071,7 @@ async function deleteUser(userId: number) {
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
-
+const { user } = useUserSession();
 
 const route = useRoute()
 const router = useRouter()
@@ -1100,8 +1083,18 @@ onMounted(async () => {
 })
 
 async function handleSubmit() {
-	await $fetch(`/api/users/${route.params.id}`, { method: 'PUT', body: form.value })
-	router.push(`/admin/users/${route.params.id}`)
+  await $fetch(`/api/users/${route.params.id}`, { method: 'PUT', body: form.value })
+
+  // Si l’admin modifie son propre compte, on met à jour la session côté client
+  if (user.value && Number(user.value.id) === Number(route.params.id)) {
+    user.value = {
+      ...user.value,
+      name: form.value.name || null,
+      email: form.value.email,
+      admin: !!form.value.admin
+    }
+  }
+  router.push(`/admin/users/${route.params.id}`)
 }
 </script>
 
@@ -1127,46 +1120,28 @@ async function handleSubmit() {
 </template>
 
 
-## pages/plants/[id].vue
+## pages/admin/users/[id]/index.vue
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from '#app'
-import { addToCart } from '@/composables/useCart'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const router = useRouter()
-const plant = ref<any>(null)
-
-const { user, loggedIn } = useUserSession()
-const isAdmin = computed(() => !!(loggedIn.value && user.value?.admin))
+const user = ref<any>(null)
 
 onMounted(async () => {
-  plant.value = await $fetch(`/api/plants/${route.params.id}`)
+	user.value = await $fetch(`/api/users/${route.params.id}`)
 })
-
-async function deletePlant() {
-  if (!plant.value) return
-  if (!confirm('Supprimer cette plante ?')) return
-  await $fetch(`/api/admin/plants/${route.params.id}`, { method: 'DELETE' })
-  router.push('/plants')
-}
-
 </script>
 
 <template>
-  <div v-if="plant" class="container mt-4">
-    <h1>{{ plant.name }}</h1>
-    <p><strong>Prix :</strong> {{ plant.price }} €</p>
-    <p><strong>Description :</strong> {{ plant.description }}</p>
-    <p v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }}</p>
-
-    <div class="mt-3">
-      <button class="btn btn-success me-2" @click="addToCart(plant)">Ajouter au panier</button>
-      <NuxtLink v-if="isAdmin" :to="`/plants/${plant.id}/edit`" class="btn btn-warning me-2">Modifier</NuxtLink>
-      <button v-if="isAdmin" class="btn btn-danger" @click="deletePlant">Supprimer</button>
-    </div>
-  </div>
+	<div v-if="user" class="container mt-4">
+		<h1>Détails Utilisateur</h1>
+		<p><strong>Email :</strong> {{ user.email }}</p>
+		<p><strong>Nom :</strong> {{ user.name || '-' }}</p>
+		<p><strong>Administrateur :</strong> {{ user.admin ? 'Oui' : 'Non' }}</p>
+		<NuxtLink :to="`/admin/users/${user.id}/edit`" class="btn btn-warning mt-3">Modifier</NuxtLink>
+	</div>
 </template>
 
 
@@ -1259,48 +1234,150 @@ async function handleSubmit() {
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
 
-
 const route = useRoute()
 const router = useRouter()
 const form = ref({ name: '', price: 0, description: '', stock: 0 })
+const loading = ref(true)
+const error = ref('')
+
+console.log("Page d'édition initialisée - ID:", route.params.id)
 
 onMounted(async () => {
-	const data = await $fetch(`/api/plants/${route.params.id}`)
-	form.value = data
+  console.log("Montage du composant, récupération des données...")
+  loading.value = true
+
+  try {
+    if (!route.params.id) {
+      console.error("ID manquant dans les paramètres de route")
+      error.value = "Identifiant de plante manquant"
+      return
+    }
+
+    console.log(`Appel API: /api/plants/${route.params.id}`)
+    const data = await $fetch(`/api/plants/${route.params.id}`)
+    console.log("Données reçues:", data)
+
+    if (!data || typeof data !== 'object') {
+      console.error("Format de données invalide:", data)
+      error.value = "Format de données invalide"
+      return
+    }
+
+    form.value = {
+      name: data.name || '',
+      price: data.price || 0,
+      description: data.description || '',
+      stock: data.stock || 0
+    }
+    console.log("Formulaire initialisé:", form.value)
+  } catch (err) {
+    console.error("Erreur lors du chargement:", err)
+    error.value = `Erreur: ${err.message || 'Impossible de charger les données'}`
+  } finally {
+    loading.value = false
+  }
 })
 
 async function handleSubmit() {
-	await $fetch(`/api/plants/${route.params.id}`, {
-		method: 'PUT',
-		body: form.value
-	})
-	router.push(`/plants/${route.params.id}`)
+  console.log("Soumission du formulaire:", form.value)
+  try {
+    const response = await $fetch(`/api/plants/${route.params.id}`, {
+      method: 'PUT',
+      body: form.value
+    })
+    console.log("Réponse de l'API:", response)
+    router.push(`/plants/${route.params.id}`)
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour:", err)
+    error.value = `Erreur: ${err.message || 'Impossible de mettre à jour'}`
+  }
 }
 </script>
 
 <template>
-	<div class="container mt-4">
-		<h1>Éditer la Plante</h1>
-		<form @submit.prevent="handleSubmit">
-			<div class="mb-3">
-				<label>Nom</label>
-				<input v-model="form.name" class="form-control" required />
-			</div>
-			<div class="mb-3">
-				<label>Prix (€)</label>
-				<input v-model="form.price" type="number" class="form-control" required />
-			</div>
-			<div class="mb-3">
-				<label>Description</label>
-				<textarea v-model="form.description" class="form-control" rows="4"></textarea>
-			</div>
-			<div class="mb-3">
-				<label>Stock</label>
-				<input v-model="form.stock" type="number" class="form-control" required />
-			</div>
-			<button class="btn btn-primary">Enregistrer</button>
-		</form>
-	</div>
+  <div class="container mt-4">
+    <h1>Éditer la Plante</h1>
+
+    <div v-if="error" class="alert alert-danger">
+      {{ error }}
+    </div>
+
+    <div v-if="loading" class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2">Chargement des données...</p>
+    </div>
+
+
+    <form v-else @submit.prevent="handleSubmit">
+      <div class="mb-3">
+        <label>Nom</label>
+        <input v-model="form.name" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label>Prix (€)</label>
+        <input v-model="form.price" type="number" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label>Description</label>
+        <textarea v-model="form.description" class="form-control" rows="4"></textarea>
+      </div>
+      <div class="mb-3">
+        <label>Stock</label>
+        <input v-model="form.stock" type="number" class="form-control" required />
+      </div>
+      <button class="btn btn-primary">Enregistrer</button>
+      <NuxtLink :to="`/plants/${route.params.id}`" class="btn btn-secondary ms-2">Annuler</NuxtLink>
+    </form>
+
+    <div class="mt-3">
+      <strong>Paramètres route:</strong> {{ route.params }}
+    </div>
+  </div>
+</template>
+
+
+## pages/plants/[id]/index.vue
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from '#app'
+import { addToCart } from '@/composables/useCart'
+
+const route = useRoute()
+const router = useRouter()
+const plant = ref<any>(null)
+
+const { user, loggedIn } = useUserSession()
+const isAdmin = computed(() => !!(loggedIn.value && user.value?.admin))
+
+onMounted(async () => {
+  plant.value = await $fetch(`/api/plants/${route.params.id}`)
+})
+
+async function deletePlant() {
+  if (!plant.value) return
+  if (!confirm('Supprimer cette plante ?')) return
+  await $fetch(`/api/admin/plants/${route.params.id}`, { method: 'DELETE' })
+  router.push('/plants')
+}
+
+</script>
+
+<template>
+  <div v-if="plant" class="container mt-4">
+    <h1>{{ plant.name }}</h1>
+    <p><strong>Prix :</strong> {{ plant.price }} €</p>
+    <p><strong>Description :</strong> {{ plant.description }}</p>
+    <p v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }}</p>
+
+    <div class="mt-3">
+      <button class="btn btn-success me-2" @click="addToCart(plant)">Ajouter au panier</button>
+      <NuxtLink v-if="isAdmin" :to="`/plants/${plant.id}/edit`" class="btn btn-warning me-2">Modifier</NuxtLink>
+      <button v-if="isAdmin" class="btn btn-danger" @click="deletePlant">Supprimer</button>
+    </div>
+  </div>
 </template>
 
 
@@ -1599,37 +1676,12 @@ async function handleRegister() {
 </template>
 
 
-## pages/users/[id].vue
-
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
-const user = ref<any>(null)
-
-onMounted(async () => {
-	user.value = await $fetch(`/api/users/${route.params.id}`)
-})
-</script>
-
-<template>
-	<div class="container mt-4" v-if="user">
-		<h1>Mon Profil</h1>
-		<p><strong>Email :</strong> {{ user.email }}</p>
-		<p v-if="user.name"><strong>Nom :</strong> {{ user.name }}</p>
-		<NuxtLink :to="`/users/${user.id}/edit`" class="btn btn-primary">
-			Modifier mon profil
-		</NuxtLink>
-	</div>
-</template>
-
-
 ## pages/users/[id]/edit.vue
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
+const { user } = useUserSession();
 
 
 const route = useRoute()
@@ -1645,13 +1697,23 @@ onMounted(async () => {
 })
 
 async function handleSubmit() {
-	const res = await $fetch(`/api/users/${route.params.id}`, {
-		method: 'PUT',
-		body: form.value
-	}).catch(async (err) => {
-		errors.value = [err.message]
-	})
-	if (!errors.value.length) router.push(`/users/${route.params.id}`)
+  const res = await $fetch(`/api/users/${route.params.id}`, {
+    method: 'PUT',
+    body: form.value
+  }).catch((err) => {
+    errors.value = [err.message]
+  })
+  if (!errors.value.length) {
+    // Si on édite notre propre profil, on met à jour la session côté client
+    if (user.value && Number(user.value.id) === Number(route.params.id)) {
+      user.value = {
+        ...user.value,
+        name: form.value.name || null,
+        email: form.value.email
+      }
+    }
+    router.push(`/users/${route.params.id}`)
+  }
 }
 </script>
 
@@ -1673,6 +1735,32 @@ async function handleSubmit() {
 			</div>
 			<button class="btn btn-primary">Enregistrer</button>
 		</form>
+	</div>
+</template>
+
+
+## pages/users/[id]/index.vue
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const user = ref<any>(null)
+
+onMounted(async () => {
+	user.value = await $fetch(`/api/users/${route.params.id}`)
+})
+</script>
+
+<template>
+	<div class="container mt-4" v-if="user">
+		<h1>Mon Profil</h1>
+		<p><strong>Email :</strong> {{ user.email }}</p>
+		<p v-if="user.name"><strong>Nom :</strong> {{ user.name }}</p>
+		<NuxtLink :to="`/users/${user.id}/edit`" class="btn btn-primary">
+			Modifier mon profil
+		</NuxtLink>
 	</div>
 </template>
 
@@ -2076,6 +2164,7 @@ export default defineEventHandler(async (event) => {
 // # Importations
 import { PrismaClient } from "@prisma/client";
 import { defineEventHandler, readBody, sendError, createError } from "h3";
+// import { getUserSession, setUserSession } from "nuxt-auth-utils";
 
 // # Données
 const prisma = new PrismaClient();
@@ -2093,7 +2182,22 @@ export default defineEventHandler(async (event) => {
 
 	if (event.node.req.method === "PUT") {
 		const data = await readBody(event);
-		return await prisma.user.update({ where: { id }, data });
+		const updated = await prisma.user.update({ where: { id }, data });
+
+		// Si l’utilisateur modifié est l’utilisateur connecté, on rafraîchit la session
+		const session = await getUserSession(event);
+		if (session?.user?.id && Number(session.user.id) === id) {
+			await setUserSession(event, {
+				...session,
+				user: {
+					id: String(updated.id),
+					email: updated.email,
+					name: updated.name ?? null,
+					admin: updated.admin,
+				},
+			});
+		}
+		return updated;
 	}
 
 	if (event.node.req.method === "DELETE") {
