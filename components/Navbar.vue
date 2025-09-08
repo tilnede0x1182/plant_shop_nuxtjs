@@ -1,12 +1,12 @@
 <script setup lang="ts">
 const { loggedIn, user, clear } = useUserSession();
 import { ref, onMounted, onUnmounted } from "vue";
-import { computeCartCount } from '@/composables/useCart' // calcule DRY du compteur
+import { computeCartCount } from "@/composables/useCart"; // calcule DRY du compteur
 
 const cartCount = ref<number>(0);
 
 function updateCartCount() {
-	cartCount.value = computeCartCount()
+	cartCount.value = computeCartCount();
 }
 
 onMounted(() => {
@@ -14,11 +14,11 @@ onMounted(() => {
 	window.addEventListener("storage", updateCartCount);
 	window.addEventListener("cart-updated", updateCartCount);
 });
+
 onUnmounted(() => {
 	window.removeEventListener("storage", updateCartCount);
 	window.removeEventListener("cart-updated", updateCartCount);
 });
-// ---------------------------------------------------------------------------
 
 async function logout() {
 	await $fetch("/api/auth/logout", { method: "POST" });
@@ -29,7 +29,7 @@ async function logout() {
 </script>
 
 <template>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+	<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
 		<div class="container">
 			<NuxtLink class="navbar-brand" to="/">PlantShop</NuxtLink>
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -38,12 +38,17 @@ async function logout() {
 
 			<div class="collapse navbar-collapse" id="navbarNav">
 				<ul class="navbar-nav ms-auto">
+					<template v-if="loggedIn">
+						<li class="nav-item d-flex align-items-center text-white me-3">
+							{{ user?.name }}
+							<span v-if="user?.admin">&nbsp;(Administrateur)</span>
+						</li>
+					</template>
 					<li class="nav-item">
 						<NuxtLink class="nav-link" to="/cart" id="cart-link">
-							Panier<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+							Mon Panier<span v-if="cartCount > 0"> ({{ cartCount }})</span>
 						</NuxtLink>
 					</li>
-
 					<template v-if="loggedIn">
 						<li class="nav-item">
 							<NuxtLink class="nav-link" to="/orders">Mes Commandes</NuxtLink>
@@ -65,10 +70,10 @@ async function logout() {
 
 					<template v-else>
 						<li class="nav-item">
-							<NuxtLink class="nav-link" to="/auth/signin">Connexion</NuxtLink>
+							<NuxtLink class="nav-link" to="/auth/register">S'inscrire</NuxtLink>
 						</li>
 						<li class="nav-item">
-							<NuxtLink class="nav-link" to="/auth/register">Inscription</NuxtLink>
+							<NuxtLink class="nav-link" to="/auth/signin">Se connecter</NuxtLink>
 						</li>
 					</template>
 				</ul>

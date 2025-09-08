@@ -1,0 +1,15 @@
+/* Couleur personnalisée de la navbar – comme les projets d'exemple */
+.custom-navbar {
+	background-color: #1d8038;
+}
+
+/* Option explicite pour la lisibilité des textes dans la navbar */
+.custom-navbar .navbar-brand,
+.custom-navbar .nav-link {
+	color: #fff;
+}
+.custom-navbar .nav-link:hover,
+.custom-navbar .nav-link:focus {
+	color: #fff;
+	opacity: .85;
+}
