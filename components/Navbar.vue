@@ -1,20 +1,12 @@
 <script setup lang="ts">
 const { loggedIn, user, clear } = useUserSession();
-
-// --- Compteur panier (même logique que le modèle Next) ----------------------
 import { ref, onMounted, onUnmounted } from "vue";
+import { computeCartCount } from '@/composables/useCart' // calcule DRY du compteur
 
 const cartCount = ref<number>(0);
 
 function updateCartCount() {
-	try {
-		const raw = localStorage.getItem("cart") || "{}";
-		const cart = JSON.parse(raw);
-		const total = Array.isArray(cart) ? cart.reduce((t, i) => t + (i.quantity || 0), 0) : Object.values(cart).reduce((t: number, i: any) => t + (i.quantity || 0), 0);
-		cartCount.value = total;
-	} catch {
-		cartCount.value = 0;
-	}
+	cartCount.value = computeCartCount()
 }
 
 onMounted(() => {

@@ -10,6 +10,8 @@
 │   ├── FlashMessages.vue
 │   ├── Navbar.vue
 │   └── UserMenu.vue
+├── composables
+│   └── useCart.ts
 ├── import-test.ts
 ├── layouts
 │   └── default.vue
@@ -90,7 +92,7 @@
 ├── tsconfig.seed.json
 └── users.txt
 
-30 directories, 58 files
+31 directories, 59 files
 
 # CONFIG
 #
@@ -368,39 +370,40 @@ testImports();
 ## components/UserMenu.vue
 
 <script setup lang="ts">
-const { loggedIn, user, clear } = useUserSession()
+const { loggedIn, user, clear } = useUserSession();
 
 async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
-  await clear()
-  await navigateTo('/')
+	await $fetch("/api/auth/logout", { method: "POST" });
+	await clear();
+	await navigateTo('/')
+	if (typeof window !== "undefined") window.location.reload();
 }
 </script>
 
 <template>
-  <div v-if="loggedIn && user" class="dropdown">
-    <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-      {{ user.name || user.email }}
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-      <li>
-        <NuxtLink :to="`/users/${user.id}`" class="dropdown-item">Profil</NuxtLink>
-      </li>
-      <li>
-        <NuxtLink to="/orders" class="dropdown-item">Mes commandes</NuxtLink>
-      </li>
-      <li v-if="user.admin">
-        <NuxtLink to="/admin/plants" class="dropdown-item">Admin Plantes</NuxtLink>
-      </li>
-      <li v-if="user.admin">
-        <NuxtLink to="/admin/users" class="dropdown-item">Admin Utilisateurs</NuxtLink>
-      </li>
-      <li><hr class="dropdown-divider" /></li>
-      <li>
-        <button class="dropdown-item text-danger" @click="logout">Déconnexion</button>
-      </li>
-    </ul>
-  </div>
+	<div v-if="loggedIn && user" class="dropdown">
+		<button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+			{{ user.name || user.email }}
+		</button>
+		<ul class="dropdown-menu dropdown-menu-end">
+			<li>
+				<NuxtLink :to="`/users/${user.id}`" class="dropdown-item">Profil</NuxtLink>
+			</li>
+			<li>
+				<NuxtLink to="/orders" class="dropdown-item">Mes commandes</NuxtLink>
+			</li>
+			<li v-if="user.admin">
+				<NuxtLink to="/admin/plants" class="dropdown-item">Admin Plantes</NuxtLink>
+			</li>
+			<li v-if="user.admin">
+				<NuxtLink to="/admin/users" class="dropdown-item">Admin Utilisateurs</NuxtLink>
+			</li>
+			<li><hr class="dropdown-divider" /></li>
+			<li>
+				<button class="dropdown-item text-danger" @click="logout">Déconnexion</button>
+			</li>
+		</ul>
+	</div>
 </template>
 
 
@@ -476,60 +479,90 @@ onUnmounted(() => {
 ## components/Navbar.vue
 
 <script setup lang="ts">
-const { loggedIn, user, clear } = useUserSession()
+const { loggedIn, user, clear } = useUserSession();
+
+// --- Compteur panier (même logique que le modèle Next) ----------------------
+import { ref, onMounted, onUnmounted } from "vue";
+
+const cartCount = ref<number>(0);
+
+function updateCartCount() {
+	try {
+		const raw = localStorage.getItem("cart") || "{}";
+		const cart = JSON.parse(raw);
+		const total = Array.isArray(cart) ? cart.reduce((t, i) => t + (i.quantity || 0), 0) : Object.values(cart).reduce((t: number, i: any) => t + (i.quantity || 0), 0);
+		cartCount.value = total;
+	} catch {
+		cartCount.value = 0;
+	}
+}
+
+onMounted(() => {
+	updateCartCount();
+	window.addEventListener("storage", updateCartCount);
+	window.addEventListener("cart-updated", updateCartCount);
+});
+onUnmounted(() => {
+	window.removeEventListener("storage", updateCartCount);
+	window.removeEventListener("cart-updated", updateCartCount);
+});
+// ---------------------------------------------------------------------------
 
 async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
-  await clear()
-  await navigateTo('/')
+	await $fetch("/api/auth/logout", { method: "POST" });
+	await clear();
+	await navigateTo("/");
+	if (typeof window !== "undefined") window.location.reload();
 }
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-      <NuxtLink class="navbar-brand" to="/">PlantShop</NuxtLink>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<div class="container">
+			<NuxtLink class="navbar-brand" to="/">PlantShop</NuxtLink>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+				<span class="navbar-toggler-icon"></span>
+			</button>
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <NuxtLink class="nav-link" to="/cart">Panier</NuxtLink>
-          </li>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav ms-auto">
+					<li class="nav-item">
+						<NuxtLink class="nav-link" to="/cart" id="cart-link">
+							Panier<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+						</NuxtLink>
+					</li>
 
-          <template v-if="loggedIn">
-            <li class="nav-item">
-              <NuxtLink class="nav-link" to="/orders">Mes Commandes</NuxtLink>
-            </li>
-            <li class="nav-item">
-              <NuxtLink class="nav-link" :to="`/users/${user?.id}`">Mon Profil</NuxtLink>
-            </li>
-            <li v-if="user?.admin" class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Admin</a>
-              <ul class="dropdown-menu">
-                <li><NuxtLink class="dropdown-item" to="/admin/plants">Gestion Plantes</NuxtLink></li>
-                <li><NuxtLink class="dropdown-item" to="/admin/users">Gestion Utilisateurs</NuxtLink></li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <button class="btn btn-link nav-link" @click="logout">Déconnexion</button>
-            </li>
-          </template>
+					<template v-if="loggedIn">
+						<li class="nav-item">
+							<NuxtLink class="nav-link" to="/orders">Mes Commandes</NuxtLink>
+						</li>
+						<li class="nav-item">
+							<NuxtLink class="nav-link" :to="`/users/${user?.id}`">Mon Profil</NuxtLink>
+						</li>
+						<li v-if="user?.admin" class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Admin</a>
+							<ul class="dropdown-menu">
+								<li><NuxtLink class="dropdown-item" to="/admin/plants">Gestion Plantes</NuxtLink></li>
+								<li><NuxtLink class="dropdown-item" to="/admin/users">Gestion Utilisateurs</NuxtLink></li>
+							</ul>
+						</li>
+						<li class="nav-item">
+							<button class="btn btn-link nav-link" @click="logout">Déconnexion</button>
+						</li>
+					</template>
 
-          <template v-else>
-            <li class="nav-item">
-              <NuxtLink class="nav-link" to="/auth/signin">Connexion</NuxtLink>
-            </li>
-            <li class="nav-item">
-              <NuxtLink class="nav-link" to="/auth/register">Inscription</NuxtLink>
-            </li>
-          </template>
-        </ul>
-      </div>
-    </div>
-  </nav>
+					<template v-else>
+						<li class="nav-item">
+							<NuxtLink class="nav-link" to="/auth/signin">Connexion</NuxtLink>
+						</li>
+						<li class="nav-item">
+							<NuxtLink class="nav-link" to="/auth/register">Inscription</NuxtLink>
+						</li>
+					</template>
+				</ul>
+			</div>
+		</div>
+	</nav>
 </template>
 
 
@@ -1095,7 +1128,6 @@ function addToCart() {
 
   localStorage.setItem('cart', JSON.stringify(cart))
   window.dispatchEvent(new Event('cart-updated'))
-  alert('Produit ajouté au panier !')
 }
 </script>
 
@@ -1463,45 +1495,46 @@ onMounted(() => {
 ## pages/auth/signin.vue
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
+const email = ref("");
+const password = ref("");
+const error = ref("");
 
 async function handleLogin() {
-  try {
-    const res = await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: { email: email.value, password: password.value }
-    })
-    if (res?.ok) {
-      await navigateTo('/')
-    } else {
-      error.value = 'Email ou mot de passe invalide'
-    }
-  } catch {
-    error.value = 'Email ou mot de passe invalide'
-  }
+	try {
+		const res = await $fetch("/api/auth/login", {
+			method: "POST",
+			body: { email: email.value, password: password.value },
+		});
+		if (res?.ok) {
+			await navigateTo('/')
+			if (typeof window !== "undefined") window.location.reload();
+		} else {
+			error.value = "Email ou mot de passe invalide";
+		}
+	} catch {
+		error.value = "Email ou mot de passe invalide";
+	}
 }
 </script>
 
 <template>
-  <div class="container mt-4">
-    <h1>Se connecter</h1>
-    <form @submit.prevent="handleLogin" class="mt-3" style="max-width: 400px">
-      <div class="mb-3">
-        <label>Email</label>
-        <input v-model="email" type="email" class="form-control" required />
-      </div>
-      <div class="mb-3">
-        <label>Mot de passe</label>
-        <input v-model="password" type="password" class="form-control" required />
-      </div>
-      <div v-if="error" class="alert alert-danger">{{ error }}</div>
-      <button class="btn btn-primary w-100" type="submit">Connexion</button>
-    </form>
-  </div>
+	<div class="container mt-4">
+		<h1>Se connecter</h1>
+		<form @submit.prevent="handleLogin" class="mt-3" style="max-width: 400px">
+			<div class="mb-3">
+				<label>Email</label>
+				<input v-model="email" type="email" class="form-control" required />
+			</div>
+			<div class="mb-3">
+				<label>Mot de passe</label>
+				<input v-model="password" type="password" class="form-control" required />
+			</div>
+			<div v-if="error" class="alert alert-danger">{{ error }}</div>
+			<button class="btn btn-primary w-100" type="submit">Connexion</button>
+		</form>
+	</div>
 </template>
 
 
@@ -1636,6 +1669,27 @@ async function handleSubmit() {
 		</form>
 	</div>
 </template>
+
+
+## composables/useCart.ts
+
+// composables/useCart.ts
+/**
+ * Ajout d'une plante au panier localStorage + évènement cart-updated.
+ * @param plant objet plante (id, name, price, ...)
+ */
+export function addToCart(plant: { id: number; name: string; price: number }) {
+	let cart: Record<number, any>;
+	try {
+		cart = JSON.parse(localStorage.getItem("cart") || "{}");
+	} catch {
+		cart = {};
+	}
+	const id = plant.id;
+	cart[id] = cart[id] ? { ...cart[id], quantity: cart[id].quantity + 1 } : { id: plant.id, name: plant.name, price: plant.price, quantity: 1 };
+	localStorage.setItem("cart", JSON.stringify(cart));
+	window.dispatchEvent(new Event("cart-updated"));
+}
 
 
 ## README.md
@@ -2103,6 +2157,7 @@ export default defineEventHandler(async (event) => {
 #
       1 ## app.vue
       4 ## components
+      1 ## composables
       1 ## Development Server
       2 ## .env
       1 ## import-test.ts

@@ -1,39 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
+import { loadCart, removeFromCart } from "@/composables/useCart";
 
-type CartItem = { id: number; name: string; price: number; quantity: number; stock: number }
-const cart = ref<Record<number, CartItem>>({})
-
-function loadCart() {
-	try {
-		return JSON.parse(localStorage.getItem('cart') || '{}')
-	} catch {
-		return {}
-	}
-}
-
-function saveCart(c: Record<number, CartItem>) {
-	localStorage.setItem('cart', JSON.stringify(c))
-	cart.value = c
-}
+type CartItem = { id: number; name: string; price: number; quantity: number; stock: number };
+const cart = ref<Record<number, CartItem>>({});
 
 function removeItem(id: number) {
-	const c = { ...cart.value }
-	delete c[id]
-	saveCart(c)
+	removeFromCart(id);
+	cart.value = loadCart();
 }
 
 onMounted(() => {
-	cart.value = loadCart()
-})
+	cart.value = loadCart();
+});
 </script>
 
 <template>
 	<div class="container mt-4">
 		<h1>🛒 Mon Panier</h1>
-		<div v-if="!Object.keys(cart).length" class="alert alert-info mt-3">
-			Votre panier est vide.
-		</div>
+		<div v-if="!Object.keys(cart).length" class="alert alert-info mt-3">Votre panier est vide.</div>
 		<table v-else class="table mt-3">
 			<thead class="table-light">
 				<tr>
