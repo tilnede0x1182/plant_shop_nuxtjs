@@ -1,10 +1,37 @@
 <script setup lang="ts">
 const { loggedIn, user, clear } = useUserSession();
 
+// --- Compteur panier (même logique que le modèle Next) ----------------------
+import { ref, onMounted, onUnmounted } from "vue";
+
+const cartCount = ref<number>(0);
+
+function updateCartCount() {
+	try {
+		const raw = localStorage.getItem("cart") || "{}";
+		const cart = JSON.parse(raw);
+		const total = Array.isArray(cart) ? cart.reduce((t, i) => t + (i.quantity || 0), 0) : Object.values(cart).reduce((t: number, i: any) => t + (i.quantity || 0), 0);
+		cartCount.value = total;
+	} catch {
+		cartCount.value = 0;
+	}
+}
+
+onMounted(() => {
+	updateCartCount();
+	window.addEventListener("storage", updateCartCount);
+	window.addEventListener("cart-updated", updateCartCount);
+});
+onUnmounted(() => {
+	window.removeEventListener("storage", updateCartCount);
+	window.removeEventListener("cart-updated", updateCartCount);
+});
+// ---------------------------------------------------------------------------
+
 async function logout() {
 	await $fetch("/api/auth/logout", { method: "POST" });
 	await clear();
-	await navigateTo('/')
+	await navigateTo("/");
 	if (typeof window !== "undefined") window.location.reload();
 }
 </script>
@@ -20,7 +47,9 @@ async function logout() {
 			<div class="collapse navbar-collapse" id="navbarNav">
 				<ul class="navbar-nav ms-auto">
 					<li class="nav-item">
-						<NuxtLink class="nav-link" to="/cart">Panier</NuxtLink>
+						<NuxtLink class="nav-link" to="/cart" id="cart-link">
+							Panier<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+						</NuxtLink>
 					</li>
 
 					<template v-if="loggedIn">

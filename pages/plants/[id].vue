@@ -37,7 +37,6 @@ function addToCart() {
 
   localStorage.setItem('cart', JSON.stringify(cart))
   window.dispatchEvent(new Event('cart-updated'))
-  alert('Produit ajouté au panier !')
 }
 </script>
 
