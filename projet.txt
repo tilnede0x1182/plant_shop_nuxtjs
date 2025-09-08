@@ -61,8 +61,6 @@
 │   │   └── migration_lock.toml
 │   ├── schema.prisma
 │   └── seed.ts
-├── projet_7-9-25-1-9.txt
-├── projet_next_a_migrer_en_nuxt.txt
 ├── projet.txt
 ├── public
 │   ├── favicon.ico
@@ -95,7 +93,7 @@
 ├── tsconfig.seed.json
 └── users.txt
 
-33 directories, 60 files
+33 directories, 58 files
 
 # CONFIG
 #
@@ -141,6 +139,7 @@
 ## nuxt.config.ts
 
 export default defineNuxtConfig({
+	title: "Magasin de plantes",
 	compatibilityDate: "2025-07-15",
 	modules: ["nuxt-auth-utils"],
 	devtools: { enabled: true },
@@ -283,20 +282,23 @@ NUXT_SESSION_PASSWORD=a6d4f3b2c1hjkhkhkjhjkhe5d7a9f0b1c2d3e4f5061728394a5b6chkjh
 
 ## assets/css/application.css
 
-/* Couleur personnalisée de la navbar – comme les projets d'exemple */
+/* Couleurs navbar */
 .custom-navbar {
-	background-color: #1d8038;
+  background-color: #1d8038;
 }
 
-/* Option explicite pour la lisibilité des textes dans la navbar */
-.custom-navbar .navbar-brand,
-.custom-navbar .nav-link {
-	color: #fff;
+/* Liens “outline” : contour et texte */
+.custom-navbar .btn-outline-light {
+  color: #fff;
+  border-color: #77b388; /* vert clair contrasté */
 }
-.custom-navbar .nav-link:hover,
-.custom-navbar .nav-link:focus {
-	color: #fff;
-	opacity: .85;
+
+/* Hover/Focus : fond vert clair, texte foncé */
+.custom-navbar .btn-outline-light:hover,
+.custom-navbar .btn-outline-light:focus {
+  background-color: #77b388;
+  color: #1d8038;
+  border-color: #77b388;
 }
 
 
@@ -807,6 +809,7 @@ new SeedService().run().catch(err => {
 ## nuxt.config.ts
 
 export default defineNuxtConfig({
+	title: "Magasin de plantes",
 	compatibilityDate: "2025-07-15",
 	modules: ["nuxt-auth-utils"],
 	devtools: { enabled: true },
@@ -823,6 +826,8 @@ export default defineNuxtConfig({
 ## layouts/default.vue
 
 <script setup lang="ts">
+// Définit le <title> global centralisé pour tout le site
+useHead({ title: "Magasin de Plantes" });
 </script>
 
 <template>
@@ -1023,14 +1028,25 @@ onMounted(async () => {
 ## pages/admin/users/index.vue
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
 
-type User = { id: number; email: string; name?: string; admin: boolean }
-const users = ref<User[]>([])
+type User = { id: number; email: string; name?: string; admin: boolean };
+const users = ref<User[]>([]);
 
 onMounted(async () => {
-	users.value = await $fetch('/api/users')
-})
+	users.value = await $fetch("/api/users");
+});
+
+/**
+ * Supprime un utilisateur (admin)
+ * Confirme, appelle l'API, puis met à jour la liste locale
+ * @userId identifiant utilisateur
+ */
+async function deleteUser(userId: number) {
+	if (!confirm("Supprimer cet utilisateur ?")) return;
+	await $fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+	users.value = users.value.filter((user) => user.id !== userId);
+}
 </script>
 
 <template>
@@ -1038,19 +1054,27 @@ onMounted(async () => {
 		<h1>Gestion des Utilisateurs</h1>
 		<table class="table table-striped mt-3">
 			<thead class="table-light">
-				<tr><th>Nom</th><th>Email</th><th>Admin</th><th>Actions</th></tr>
+				<tr>
+					<th>Nom</th>
+					<th>Email</th>
+					<th>Admin</th>
+					<th>Actions</th>
+				</tr>
 			</thead>
 			<tbody>
 				<tr v-for="user in users" :key="user.id">
-					<td><NuxtLink :to="`/admin/users/${user.id}`">{{ user.name || '-' }}</NuxtLink></td>
+					<td>
+						<NuxtLink :to="`/admin/users/${user.id}`">{{ user.name || "-" }}</NuxtLink>
+					</td>
 					<td>{{ user.email }}</td>
 					<td>
 						<span :class="['badge', user.admin ? 'bg-success' : 'bg-secondary']">
-							{{ user.admin ? 'Oui' : 'Non' }}
+							{{ user.admin ? "Oui" : "Non" }}
 						</span>
 					</td>
-					<td>
+					<td class="text-nowrap">
 						<NuxtLink :to="`/admin/users/${user.id}/edit`" class="btn btn-warning btn-sm">✏ Modifier</NuxtLink>
+						<button class="btn btn-danger btn-sm ms-2" @click="deleteUser(user.id)">🗑 Supprimer</button>
 					</td>
 				</tr>
 			</tbody>

@@ -1,11 +1,19 @@
 # Lancer en mode développement
 run:
-	NITRO_PORT=3150 NITRO_PORT=3150 npm run dev
+	NITRO_PORT=3150 npm run dev
+# 	NITRO_PORT=3150 npm start
+
+seed:
+	npx prisma db seed
 
 # Builder le projet (production build)
-build:
-	npm run build
-
-# Lancer en mode production (après build)
 prod:
-	NITRO_PORT=3150 npm run start
+	npm run build && NITRO_PORT=3100 npm start
+
+typage:
+	npx vue-tsc --noEmit
+
+lint:
+	npm run lint
+
+typage_lint: lint typage
