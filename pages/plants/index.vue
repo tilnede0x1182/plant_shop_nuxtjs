@@ -15,7 +15,7 @@ onMounted(async () => {
 
 <template>
 	<div class="container mt-4">
-		<h1 class="mb-4">Liste des Plantes</h1>
+		<h1 class="mb-4 text-center">🌿 Liste des Plantes</h1>
 		<NuxtLink v-if="isAdmin" to="/admin/plants/new" class="btn btn-success mb-3"> Nouvelle Plante </NuxtLink>
 		<div class="row">
 			<div v-for="plant in plants" :key="plant.id" class="col-md-4">
