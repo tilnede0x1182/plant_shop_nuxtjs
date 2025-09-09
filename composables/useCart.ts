@@ -23,7 +23,9 @@ export function loadCart(): Record<number, any> {
 export function saveCart(cart: Record<number, any>): void {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
 	window.dispatchEvent(new Event("cart-updated"));
+	window.dispatchEvent(new Event("storage"));
 }
+
 
 /**
   Calcule le nombre total d'articles.

@@ -1,23 +1,35 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { loadCart, removeFromCart, delayedUpdateCart } from "@/composables/useCart";
 
 type CartItem = { id: number; name: string; price: number; quantity: number; stock: number };
 const cart = ref<Record<number, CartItem>>({});
 
+function reloadCart() {
+  cart.value = loadCart();
+}
+
 function removeItem(id: number) {
-	removeFromCart(id);
-	cart.value = loadCart();
+  removeFromCart(id);
+  cart.value = loadCart();
 }
 
 function clearCart() {
-	localStorage.removeItem("cart");
-	window.dispatchEvent(new Event("cart-updated"));
-	cart.value = {};
+  localStorage.removeItem("cart");
+  window.dispatchEvent(new Event("cart-updated"));
+  cart.value = {};
 }
 
 onMounted(() => {
-	cart.value = loadCart();
+  cart.value = loadCart();
+
+  window.addEventListener("cart-updated", reloadCart);
+  window.addEventListener("storage", reloadCart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("cart-updated", reloadCart);
+  window.removeEventListener("storage", reloadCart);
 });
 </script>
 

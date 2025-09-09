@@ -1,19 +1,26 @@
 // # Importations
 import { PrismaClient } from "@prisma/client";
 import { defineEventHandler, readBody, sendError, createError } from "h3";
-// import { getUserSession, setUserSession } from "nuxt-auth-utils";
 
-// # Données
 const prisma = new PrismaClient();
 
-// # Handler principal
 export default defineEventHandler(async (event) => {
 	const id = Number(event.context.params?.id);
-	if (isNaN(id)) return sendError(event, createError({ statusCode: 400, statusMessage: "Invalid ID" }));
+	if (isNaN(id)) {
+		console.log("API: ID utilisateur invalide");
+		return sendError(event, createError({ statusCode: 400, statusMessage: "Invalid ID" }));
+	}
 
 	if (event.node.req.method === "GET") {
+		console.log(`API: Recherche utilisateur ID=${id}`);
 		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user) return sendError(event, createError({ statusCode: 404, statusMessage: "User not found" }));
+
+		if (!user) {
+			console.log(`API: Utilisateur ID=${id} non trouvé en base`);
+			return sendError(event, createError({ statusCode: 404, statusMessage: "User not found" }));
+		}
+
+		console.log(`API: Utilisateur ID=${id} trouvé`);
 		return user;
 	}
 
