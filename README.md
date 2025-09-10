@@ -1,89 +1,98 @@
 # 🌿 PlantShop - E-commerce Botanique (Nuxt 4 / PostgreSQL)
 
-Application complète de vente de plantes développée avec Nuxt 4 (Vue 3) et Prisma.
-Elle propose une interface publique pour les utilisateurs et un espace d'administration sécurisé pour la gestion des plantes, des commandes et des comptes.
-Le seed génère des données réalistes (admins, utilisateurs, plantes, commandes) et écrit aussi un fichier `users.txt` pour faciliter les tests.
+Application complète de vente de plantes développée avec **Nuxt 4** (Vue 3) et **Prisma**.
+Elle propose une interface publique fluide pour les utilisateurs 🌱 et un espace d'administration sécurisé 🔐 pour la gestion des plantes, des commandes et des comptes.
+Un script de seed réaliste pré-remplit la base avec des plantes 🪴, des utilisateurs 👤, des commandes 📦 et génère un fichier `users.txt` pour faciliter vos tests.
 
 ---
 
 ## 🛠 Stack Technique
 
-### Backend
+### 🧩 Backend
 
 - **Langage & Framework**
   - TypeScript / JavaScript
-  - Nuxt 4 (Nitro)
-- **Données & ORM**
-  - PostgreSQL (pg) + Prisma
-  - Migrations & seed (`prisma/seed.ts` avec @faker-js/faker, bcrypt)
-- **Auth & Sessions**
-  - `nuxt-auth-utils` (login/logout/session côté API)
-  - Middleware global côté serveur pour protéger `/admin` et `/api/admin`
+  - Nuxt 4 (avec Nitro pour le serveur API)
+- **Base de données & ORM**
+  - PostgreSQL (driver `pg`)
+  - Prisma (modèles, migrations, seed)
+  - FakerJS + Bcrypt pour le script `prisma/seed.ts`
+- **Authentification**
+  - Sessions via `nuxt-auth-utils` (API REST `/api/auth/*`)
+  - Cookies signés
+  - Middleware serveur pour restreindre les routes `/admin` et `/api/admin`
 
-### Frontend
+### 🎨 Frontend
 
 - **Templates**
-  - Vue 3 (SFC), pages Nuxt (SSR/CSR hybride)
+  - Vue 3 (Single File Components)
+  - Pages Nuxt hybrides (SSR + Client Side)
 - **UI/UX**
-  - Bootstrap 5.3.3 via CDN + styles custom (`assets/css/application.css`)
-- **Cart**
-  - Panier client-side (localStorage) + événement `cart-updated` pour MAJ UI
+  - Bootstrap 5.3.3 (via CDN)
+  - Feuilles de styles personnalisées dans `assets/css/application.css`
+- **Panier**
+  - Stockage local avec `localStorage`
+  - Synchronisation via l’événement personnalisé `cart-updated`
+  - Panier persistant sans AJAX
 
 ---
 
 ## ✨ Fonctionnalités
 
-### Client
+### 👥 Côté client
 
-- **Parcourir & consulter**
-  - Catalogue des plantes, recherche simple, fiche produit
-- **Acheter**
-  - Panier local + validation de commande (stock décrémenté, total calculé)
-- **Compte**
-  - Connexion/inscription, profil, historique des commandes
+- **🛍 Catalogue**
+  - Liste des plantes, recherche simple, pagination
+- **📄 Fiches produits**
+  - Description, prix, stock, ajout au panier
+- **🛒 Panier**
+  - Panier dynamique stocké localement, mise à jour en temps réel
+- **✅ Commandes**
+  - Validation du panier, stockage en base, réduction du stock
+- **👤 Compte utilisateur**
+  - Authentification, profil modifiable, historique des commandes
 
-### Administrateur
+### 🔧 Administration
 
-- **Gestion des plantes (CRUD)**
-  - Pages `/admin/plants/*` + API admin dédiée
-- **Gestion des utilisateurs (CRUD, rôle admin)**
-  - Pages `/admin/users/*` + endpoints associés
-- **Espace protégé**
-  - Accès conditionné par session & rôle via middleware serveur
+- **🌱 Plantes**
+  - Ajout, édition, suppression, consultation
+- **👥 Utilisateurs**
+  - CRUD complet avec rôles (`USER`, `ADMIN`)
+- **🔐 Sécurisation**
+  - Interface d'administration distincte, avec contrôle d'accès serveur
 
-### Sécurité
+### 🛡 Sécurité
 
-- **Sessions & Auth**
-  - Endpoints `/api/auth/login|logout|session`
-- **Rôles**
-  - `USER` / `ADMIN` au niveau des modèles & de la session
-- **Contrôles d'accès**
-  - Middleware global serveur + hashage des mots de passe (bcrypt)
+- Sessions avec cookies sécurisés
+- Rôles et permissions côté base & application
+- Mot de passe hashé via `bcrypt`
+- Middleware serveur de protection des zones sensibles
 
 ---
 
 ## 🚀 Installation et lancement
 
-### Prérequis
+### 🔧 Prérequis
 
-- Node.js
-- PostgreSQL
-- npm
+- Node.js ≥ 18
+- PostgreSQL ≥ 13
+- npm ≥ 9
 
-### Étapes
+### ⚙️ Étapes
 
 ```bash
 # 1) Installer les dépendances
 npm install
 
-# 2) Configurer la base & exécuter les migrations
+# 2) Créer la base de données et exécuter les migrations Prisma
 npx prisma migrate dev
 
-# 3) Peupler la base (génère aussi users.txt à la racine)
+# 3) Peupler la base avec des données factices (admins, utilisateurs, plantes, commandes)
+#    => Génère aussi un fichier users.txt à la racine pour tester rapidement
 make seed
 
-# 4) Lancer en développement (http://localhost:3150)
+# 4) Lancer l'application en développement (http://localhost:3150)
 make run
 
-# 5) Production : build puis démarrage (port 3155)
+# 5) Lancer en production (build + start sur le port 3155)
 make prod
