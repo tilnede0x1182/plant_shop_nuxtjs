@@ -8,7 +8,7 @@ seed:
 
 # Builder le projet (production build)
 prod:
-	npm run build && NITRO_PORT=3100 npm start
+	npm run build && NITRO_PORT=3155 npm start
 
 typage:
 	npx vue-tsc --noEmit
