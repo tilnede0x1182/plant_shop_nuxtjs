@@ -22,11 +22,16 @@ onUnmounted(() => {
 
 function capitalize(str) {
   if (!str) return "";
+  const lowerExceptions = ["de"];
+
   return str
     .split(" ")
-    .map(word =>
-      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : ""
-    )
+    .map((word, index) => {
+      const w = word.toLowerCase();
+      // On garde "de" en minuscules, sauf s'il est en première position
+      if (lowerExceptions.includes(w) && index !== 0) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
     .join(" ");
 }
 
