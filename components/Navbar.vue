@@ -20,6 +20,16 @@ onUnmounted(() => {
 	window.removeEventListener("cart-updated", updateCartCount);
 });
 
+function capitalize(str) {
+  if (!str) return "";
+  return str
+    .split(" ")
+    .map(word =>
+      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : ""
+    )
+    .join(" ");
+}
+
 async function logout() {
 	await $fetch("/api/auth/logout", { method: "POST" });
 	await clear();
@@ -40,7 +50,7 @@ async function logout() {
 				<ul class="navbar-nav ms-auto">
 					<template v-if="loggedIn">
 						<li class="nav-item d-flex align-items-center text-white me-3">
-							{{ user?.name }}
+							{{ capitalize(user?.name) }}
 							<span v-if="user?.admin">&nbsp;(Administrateur)</span>
 						</li>
 					</template>
