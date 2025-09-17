@@ -1,5 +1,5 @@
 // # Importations
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import type { User, Plant } from "@prisma/client";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
@@ -9,7 +9,7 @@ import { join } from "node:path";
 // # Données
 const NB_ADMINS = 3;
 const NB_USERS = 20;
-const NB_PLANTS = 60;
+const NB_PLANTS = 30;
 const MAX_ORDERS_PER_USER = 7;
 const PLANT_NAMES = [
 	"Rose",
@@ -98,13 +98,7 @@ class SeedService {
 		const email = `admin${index + 1}@planteshop.com`;
 		const password = "password";
 		await this.prisma.user.create({
-			data: {
-				email,
-				password: await bcrypt.hash(password, 10),
-				admin: true,
-				// Utiliser des noms générés statiquement pour éviter les problèmes de faker
-				name: `Admin ${index + 1}`,
-			},
+			data: { email, password: await bcrypt.hash(password, 10), admin: true, name: faker.person.fullName() },
 		});
 		return { email, password };
 	};
@@ -112,21 +106,15 @@ class SeedService {
 	// ## Users
 	private createUsers = async () => {
 		const users: { email: string; password: string }[] = [];
-		for (let idx = 0; idx < NB_USERS; idx++) users.push(await this.addUser(idx));
+		for (let idx = 0; idx < NB_USERS; idx++) users.push(await this.addUser());
 		return users;
 	};
 
-	private addUser = async (index: number) => {
-		// Générer des mots de passe manuellement pour éviter les problèmes de faker
-		const password = `password${index + 1}`;
-		const email = `user${index + 1}@example.com`;
+	private addUser = async () => {
+		const password = faker.internet.password({ length: 12 });
+		const email = faker.internet.email().toLowerCase();
 		await this.prisma.user.create({
-			data: {
-				email,
-				password: await bcrypt.hash(password, 10),
-				admin: false,
-				name: `Utilisateur ${index + 1}`,
-			},
+			data: { email, password: await bcrypt.hash(password, 10), admin: false, name: faker.person.fullName() },
 		});
 		return { email, password };
 	};
@@ -145,10 +133,9 @@ class SeedService {
 		return this.prisma.plant.create({
 			data: {
 				name,
-				// Utiliser Math.random au lieu de faker pour générer des nombres aléatoires
-				price: Math.floor(Math.random() * 46) + 5, // Entre 5 et 50
-				description: `Description de ${name} avec des détails sur l'entretien et la croissance.`,
-				stock: Math.floor(Math.random() * 26) + 5, // Entre 5 et 30
+				price: faker.number.int({ min: 5, max: 50 }),
+				description: faker.lorem.sentence({ min: 10, max: 14 }),
+				stock: faker.number.int({ min: 5, max: 30 }),
 			},
 		});
 	};
@@ -156,7 +143,7 @@ class SeedService {
 	// ## Orders
 	private createOrders = async (plants: Plant[]) => {
 		for (const user of await this.prisma.user.findMany()) {
-			const numberOfOrders = Math.floor(Math.random() * (MAX_ORDERS_PER_USER + 1)); // Entre 0 et MAX_ORDERS_PER_USER
+			const numberOfOrders = faker.number.int({ min: 0, max: MAX_ORDERS_PER_USER });
 			for (let idx = 0; idx < numberOfOrders; idx++) {
 				await this.createOrderForUser(user, plants);
 			}
@@ -165,14 +152,8 @@ class SeedService {
 
 	private createOrderForUser = async (user: User, plants: Plant[]) => {
 		let total = 0;
-		const statuses = ["confirmed", "pending", "shipped", "delivered"];
-		const randomStatusIndex = Math.floor(Math.random() * statuses.length);
 		const order = await this.prisma.order.create({
-			data: {
-				userId: user.id,
-				totalPrice: 0,
-				status: statuses[randomStatusIndex],
-			},
+			data: { userId: user.id, totalPrice: 0, status: faker.helpers.arrayElement(["confirmed", "pending", "shipped", "delivered"]) },
 		});
 		for (let iter = 0; iter < 2; iter++) total += await this.addItem(order.id, plants);
 		await this.prisma.order.update({ where: { id: order.id }, data: { totalPrice: total } });
@@ -181,7 +162,7 @@ class SeedService {
 	private addItem = async (orderId: number, plants: Plant[]) => {
 		const plant = plants[Math.floor(Math.random() * plants.length)];
 		if (!plant.stock) return 0;
-		const qty = Math.min(Math.floor(Math.random() * 5) + 1, plant.stock); // Entre 1 et 5
+		const qty = Math.min(faker.number.int({ min: 1, max: 5 }), plant.stock);
 		if (!qty) return 0;
 		await this.prisma.orderItem.create({ data: { orderId, plantId: plant.id, quantity: qty } });
 		await this.prisma.plant.update({ where: { id: plant.id }, data: { stock: plant.stock - qty } });
