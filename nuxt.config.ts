@@ -2,7 +2,7 @@ export default defineNuxtConfig({
 								title: "Magasin de plantes",
 								compatibilityDate: "2025-07-15",
 								modules: ["nuxt-auth-utils", "@nuxt/eslint"],
-								devtools: { enabled: true },
+								devtools: { enabled: false },
 								css: ["~/assets/css/application.css"],
 								app: {
 																head: {
