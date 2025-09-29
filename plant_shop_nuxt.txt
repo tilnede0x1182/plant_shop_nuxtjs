@@ -15,6 +15,7 @@
 │   └── UserMenu.vue
 ├── composables
 │   └── useCart.ts
+├── eslint.config.mjs
 ├── import-test.ts
 ├── layouts
 │   └── default.vue
@@ -54,6 +55,7 @@
 │       └── [id]
 │           ├── edit.vue
 │           └── index.vue
+├── plant_shop_nuxt.txt
 ├── prisma
 │   ├── migrations
 │   │   ├── 20250906011224_init
@@ -93,7 +95,7 @@
 ├── tsconfig.seed.json
 └── users.txt
 
-33 directories, 58 files
+33 directories, 60 files
 
 # CONFIG
 #
@@ -108,12 +110,15 @@
 		"dev": "nuxt dev",
 		"generate": "nuxt generate",
 		"preview": "nuxt preview",
-		"postinstall": "nuxt prepare"
+		"postinstall": "nuxt prepare",
+		"lint": "eslint --ext .js,.ts,.vue ."
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.0.0",
+		"@nuxt/eslint": "^1.9.0",
 		"@prisma/client": "^6.15.0",
 		"bcryptjs": "^3.0.2",
+		"eslint": "^9.35.0",
 		"next-auth": "^4.24.11",
 		"nuxt": "^4.1.1",
 		"nuxt-better-auth": "^0.3.1",
@@ -139,17 +144,17 @@
 ## nuxt.config.ts
 
 export default defineNuxtConfig({
-	title: "Magasin de plantes",
-	compatibilityDate: "2025-07-15",
-	modules: ["nuxt-auth-utils"],
-	devtools: { enabled: true },
-	css: ["~/assets/css/application.css"],
-	app: {
-		head: {
-			link: [{ rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" }],
-			script: [{ src: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js", tagPosition: "bodyClose" }],
-		},
-	},
+								title: "Magasin de plantes",
+								compatibilityDate: "2025-07-15",
+								modules: ["nuxt-auth-utils", "@nuxt/eslint"],
+								devtools: { enabled: false },
+								css: ["~/assets/css/application.css"],
+								app: {
+																head: {
+																								link: [{ rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" }],
+																								script: [{ src: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js", tagPosition: "bodyClose" }],
+																},
+								},
 });
 
 
@@ -177,19 +182,33 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/plant_shop_n
 NUXT_SESSION_PASSWORD=a6d4f3b2c1hjkhkhkjhjkhe5d7a9f0b1c2d3e4f5061728394a5b6chkjhkjh7d8e9f0011223344556677
 
 
+## eslint.config.mjs
+
+// @ts-check
+import withNuxt from './.nuxt/eslint.config.mjs'
+
+export default withNuxt(
+  // Your custom configs here
+)
+
+
 ## Makefile
 
-# Lancer en mode développement
-run:
+# Lance en mode développement
+run: run-dev
+run-dev:
 	NITRO_PORT=3150 npm run dev
-# 	NITRO_PORT=3150 npm start
+
+# Compile le projet
+build:
+	npm run build
+
+# Sert le build en mode production
+prod:
+	NITRO_PORT=3150 npm run preview
 
 seed:
 	npx prisma db seed
-
-# Builder le projet (production build)
-prod:
-	npm run build && NITRO_PORT=3100 npm start
 
 typage:
 	npx vue-tsc --noEmit
@@ -528,6 +547,21 @@ onUnmounted(() => {
 	window.removeEventListener("cart-updated", updateCartCount);
 });
 
+function capitalize(str) {
+  if (!str) return "";
+  const lowerExceptions = ["de"];
+
+  return str
+    .split(" ")
+    .map((word, index) => {
+      const w = word.toLowerCase();
+      // On garde "de" en minuscules, sauf s'il est en première position
+      if (lowerExceptions.includes(w) && index !== 0) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(" ");
+}
+
 async function logout() {
 	await $fetch("/api/auth/logout", { method: "POST" });
 	await clear();
@@ -548,7 +582,7 @@ async function logout() {
 				<ul class="navbar-nav ms-auto">
 					<template v-if="loggedIn">
 						<li class="nav-item d-flex align-items-center text-white me-3">
-							{{ user?.name }}
+							{{ capitalize(user?.name) }}
 							<span v-if="user?.admin">&nbsp;(Administrateur)</span>
 						</li>
 					</template>
@@ -665,7 +699,7 @@ import { join } from "node:path";
 // # Données
 const NB_ADMINS = 3;
 const NB_USERS = 20;
-const NB_PLANTS = 30;
+const NB_PLANTS = 50;
 const MAX_ORDERS_PER_USER = 7;
 const PLANT_NAMES = [
 	"Rose",
@@ -859,17 +893,17 @@ new SeedService().run().catch((err) => {
 ## nuxt.config.ts
 
 export default defineNuxtConfig({
-	title: "Magasin de plantes",
-	compatibilityDate: "2025-07-15",
-	modules: ["nuxt-auth-utils"],
-	devtools: { enabled: true },
-	css: ["~/assets/css/application.css"],
-	app: {
-		head: {
-			link: [{ rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" }],
-			script: [{ src: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js", tagPosition: "bodyClose" }],
-		},
-	},
+								title: "Magasin de plantes",
+								compatibilityDate: "2025-07-15",
+								modules: ["nuxt-auth-utils", "@nuxt/eslint"],
+								devtools: { enabled: false },
+								css: ["~/assets/css/application.css"],
+								app: {
+																head: {
+																								link: [{ rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" }],
+																								script: [{ src: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js", tagPosition: "bodyClose" }],
+																},
+								},
 });
 
 
@@ -1576,25 +1610,37 @@ await navigateTo('/plants')
 ## pages/cart.vue
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { loadCart, removeFromCart, delayedUpdateCart } from "@/composables/useCart";
 
 type CartItem = { id: number; name: string; price: number; quantity: number; stock: number };
 const cart = ref<Record<number, CartItem>>({});
 
+function reloadCart() {
+  cart.value = loadCart();
+}
+
 function removeItem(id: number) {
-	removeFromCart(id);
-	cart.value = loadCart();
+  removeFromCart(id);
+  cart.value = loadCart();
 }
 
 function clearCart() {
-	localStorage.removeItem("cart");
-	window.dispatchEvent(new Event("cart-updated"));
-	cart.value = {};
+  localStorage.removeItem("cart");
+  window.dispatchEvent(new Event("cart-updated"));
+  cart.value = {};
 }
 
 onMounted(() => {
-	cart.value = loadCart();
+  cart.value = loadCart();
+
+  window.addEventListener("cart-updated", reloadCart);
+  window.addEventListener("storage", reloadCart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("cart-updated", reloadCart);
+  window.removeEventListener("storage", reloadCart);
 });
 </script>
 
@@ -1872,7 +1918,9 @@ export function loadCart(): Record<number, any> {
 export function saveCart(cart: Record<number, any>): void {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
 	window.dispatchEvent(new Event("cart-updated"));
+	window.dispatchEvent(new Event("storage"));
 }
+
 
 /**
   Calcule le nombre total d'articles.
@@ -1991,81 +2039,104 @@ export function delayedUpdateCart(id: number, input: HTMLInputElement): void {
 
 ## README.md
 
-# Nuxt Minimal Starter
+# 🌿 PlantShop - E-commerce Botanique (Nuxt 4 / PostgreSQL)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Application complète de vente de plantes développée avec **Nuxt 4** (Vue 3) et **Prisma**.
+Elle propose une interface publique fluide pour les utilisateurs 🌱 et un espace d'administration sécurisé 🔐 pour la gestion des plantes, des commandes et des comptes.
+Un script de seed réaliste pré-remplit la base avec des plantes 🪴, des utilisateurs 👤, des commandes 📦 et génère un fichier `users.txt` pour faciliter vos tests.
 
-## Setup
+---
 
-Make sure to install dependencies:
+## 🛠 Stack Technique
+
+### 🧩 Backend
+
+- **Langage & Framework**
+  - TypeScript / JavaScript
+  - Nuxt 4 (avec Nitro pour le serveur API)
+- **Base de données & ORM**
+  - PostgreSQL (driver `pg`)
+  - Prisma (modèles, migrations, seed)
+  - FakerJS + Bcrypt pour le script `prisma/seed.ts`
+- **Authentification**
+  - Sessions via `nuxt-auth-utils` (API REST `/api/auth/*`)
+  - Cookies signés
+  - Middleware serveur pour restreindre les routes `/admin` et `/api/admin`
+
+### 🎨 Frontend
+
+- **Templates**
+  - Vue 3 (Single File Components)
+  - Pages Nuxt hybrides (SSR + Client Side)
+- **UI/UX**
+  - Bootstrap 5.3.3 (via CDN)
+  - Feuilles de styles personnalisées dans `assets/css/application.css`
+- **Panier**
+  - Stockage local avec `localStorage`
+  - Synchronisation via l’événement personnalisé `cart-updated`
+  - Panier persistant sans AJAX
+
+---
+
+## ✨ Fonctionnalités
+
+### 👥 Côté client
+
+- **🛍 Catalogue**
+  - Liste des plantes, recherche simple, pagination
+- **📄 Fiches produits**
+  - Description, prix, stock, ajout au panier
+- **🛒 Panier**
+  - Panier dynamique stocké localement, mise à jour en temps réel
+- **✅ Commandes**
+  - Validation du panier, stockage en base, réduction du stock
+- **👤 Compte utilisateur**
+  - Authentification, profil modifiable, historique des commandes
+
+### 🔧 Administration
+
+- **🌱 Plantes**
+  - Ajout, édition, suppression, consultation
+- **👥 Utilisateurs**
+  - CRUD complet avec rôles (`USER`, `ADMIN`)
+- **🔐 Sécurisation**
+  - Interface d'administration distincte, avec contrôle d'accès serveur
+
+### 🛡 Sécurité
+
+- Sessions avec cookies sécurisés
+- Rôles et permissions côté base & application
+- Mot de passe hashé via `bcrypt`
+- Middleware serveur de protection des zones sensibles
+
+---
+
+## 🚀 Installation et lancement
+
+### 🔧 Prérequis
+
+- Node.js ≥ 18
+- PostgreSQL ≥ 13
+- npm ≥ 9
+
+### ⚙️ Étapes
 
 ```bash
-# npm
+# 1) Installer les dépendances
 npm install
 
-# pnpm
-pnpm install
+# 2) Créer la base de données et exécuter les migrations Prisma
+npx prisma migrate dev
 
-# yarn
-yarn install
+# 3) Peupler la base avec des données factices (admins, utilisateurs, plantes, commandes)
+#    => Génère aussi un fichier users.txt à la racine pour tester rapidement
+make seed
 
-# bun
-bun install
-```
+# 4) Lancer l'application en développement (http://localhost:3150)
+make run
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+# 5) Lancer en production (build + start sur le port 3155)
+make prod
 
 
 ## app.vue
@@ -2419,17 +2490,38 @@ export default defineEventHandler(async (event) => {
 
 ## server/middleware/auth.global.ts
 
+// # Importations
 import { defineEventHandler, sendRedirect } from "h3";
-// import { requireUserSession } from "nuxt-auth-utils";
 
+// # Middleware global d'authentification
 export default defineEventHandler(async (event) => {
 	const url = new URL(event.node.req.url || "/", `http://${event.node.req.headers.host || "localhost"}`);
 	const { pathname } = url;
 
-	// Protéger toute la zone admin (pages + API)
+	// Routes publiques (pages + API associées)
+	const publicRoutes = ["/", "/plants", "/api/plants", "/auth/signin", "/api/auth", "/auth/register", "/api/users", "/cart"];
+
+	const isPublic = publicRoutes.some(
+		(route) =>
+			pathname === route ||
+			(route === "/plants" && pathname.startsWith("/plants/")) ||
+			(route === "/api/plants" && pathname.startsWith("/api/plants/")) ||
+			(route === "/api/auth" && pathname.startsWith("/api/auth")) ||
+			(route === "/api/users" && pathname.startsWith("/api/users"))
+	);
+
+	// Zone admin → login + admin requis
 	if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-		const { user } = await requireUserSession(event); // 401 si non connecté
-		if (!user?.admin) return sendRedirect(event, "/auth/unauthorized", 302);
+		const session = await requireUserSession(event).catch(() => null);
+		if (!session?.user) return sendRedirect(event, "/auth/signin", 302);
+		if (!session.user.admin) return sendRedirect(event, "/plants", 302);
+		return;
+	}
+
+	// Tout ce qui n'est pas public → login requis
+	if (!isPublic) {
+		const session = await requireUserSession(event).catch(() => null);
+		if (!session?.user) return sendRedirect(event, "/auth/signin", 302);
 	}
 });
 
@@ -2445,12 +2537,15 @@ export default defineEventHandler(async (event) => {
 		"dev": "nuxt dev",
 		"generate": "nuxt generate",
 		"preview": "nuxt preview",
-		"postinstall": "nuxt prepare"
+		"postinstall": "nuxt prepare",
+		"lint": "eslint --ext .js,.ts,.vue ."
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.0.0",
+		"@nuxt/eslint": "^1.9.0",
 		"@prisma/client": "^6.15.0",
 		"bcryptjs": "^3.0.2",
+		"eslint": "^9.35.0",
 		"next-auth": "^4.24.11",
 		"nuxt": "^4.1.1",
 		"nuxt-better-auth": "^0.3.1",
@@ -2473,6 +2568,16 @@ export default defineEventHandler(async (event) => {
 }
 
 
+## eslint.config.mjs
+
+// @ts-check
+import withNuxt from './.nuxt/eslint.config.mjs'
+
+export default withNuxt(
+  // Your custom configs here
+)
+
+
 
 # Liste des parties
 #
@@ -2480,18 +2585,19 @@ export default defineEventHandler(async (event) => {
       1 ## assets
       4 ## components
       1 ## composables
-      1 ## Development Server
       2 ## .env
+      2 ## eslint.config.mjs
+      1 ## ✨ Fonctionnalités
       1 ## import-test.ts
+      1 ## 🚀 Installation et lancement
       1 ## layouts
       1 ## Makefile
       2 ## nuxt.config.ts
       2 ## package.json
      21 ## pages
       3 ## prisma
-      1 ## Production
       1 ## README.md
      13 ## server
-      1 ## Setup
+      1 ## 🛠 Stack Technique
       2 ## tsconfig.json
       1 ## tsconfig.seed.json
