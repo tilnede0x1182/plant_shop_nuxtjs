@@ -1,31 +1,88 @@
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue";
+import { loadCart, removeFromCart, delayedUpdateCart } from "@/composables/useCart";
+
+type CartItem = { id: number; name: string; price: number; quantity: number; stock: number };
+const cart = ref<Record<number, CartItem>>({});
+
+function reloadCart() {
+	cart.value = loadCart();
+}
+
+function removeItem(id: number) {
+	removeFromCart(id);
+	cart.value = loadCart();
+}
+
+function clearCart() {
+	localStorage.removeItem("cart");
+	window.dispatchEvent(new Event("cart-updated"));
+	cart.value = {};
+}
+
+onMounted(() => {
+	cart.value = loadCart();
+
+	window.addEventListener("cart-updated", reloadCart);
+	window.addEventListener("storage", reloadCart);
+});
+
+onUnmounted(() => {
+	window.removeEventListener("cart-updated", reloadCart);
+	window.removeEventListener("storage", reloadCart);
+});
+
+function goToOrdersNew() {
+	if (typeof window !== "undefined") window.location.href = "/orders/new";
+}
+</script>
+
 <template>
-	<div v-if="plant" class="container mt-5" style="max-width:600px">
-		<div class="card shadow">
-			<div class="card-body">
-				<h1 class="card-title text-center mb-4">{{ plant.name }}</h1>
-				<p class="text-center fs-4 mb-2">
-					<span class="badge bg-success" style="font-size:1.2em;">{{ plant.price }} €</span>
-				</p>
-				<div class="mb-3 px-3 py-2" style="background:#f8f9fa; border-radius:8px;">
-					{{ plant.description }}
-				</div>
-				<div class="d-grid my-3">
-					<button class="btn btn-success btn-lg" @click="addToCart(plant)">
-						🛒 Ajouter au panier
-					</button>
-				</div>
-				<div v-if="isAdmin" class="d-flex justify-content-between mt-3 gap-2">
-					<NuxtLink :to="`/plants/${plant.id}/edit`" class="btn btn-warning btn-sm flex-fill">
-						✏ Modifier
-					</NuxtLink>
-					<button class="btn btn-danger btn-sm flex-fill" @click="deletePlant">
-						🗑 Supprimer
-					</button>
-				</div>
-				<div v-else class="text-end text-muted mt-2" style="font-size:0.9em;">
-					Stock restant : <strong>{{ plant.stock }}</strong>
-				</div>
+	<div class="container mt-4">
+		<h1 class="text-center">🛒 Mon Panier</h1>
+		<div v-if="!Object.keys(cart).length" class="alert alert-info mt-3">Votre panier est vide.</div>
+		<template v-else>
+			<table class="table mt-3">
+				<thead class="table-light">
+					<tr>
+						<th>Plante</th>
+						<th>Quantité</th>
+						<th>Total</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="item in cart" :key="item.id">
+						<td>
+							<NuxtLink :to="`/plants/${item.id}`" class="text-decoration-none">{{ item.name }}</NuxtLink>
+						</td>
+						<td>
+							<input
+								type="number"
+								class="form-control form-control-sm"
+								style="max-width: 70px"
+								:value="item.quantity"
+								:min="1"
+								:max="item.stock"
+								:data-cart-id="item.id"
+								:data-stock="item.stock"
+								@input="(e) => delayedUpdateCart(item.id, e.target as HTMLInputElement)"
+							/>
+						</td>
+						<td>{{ item.price * item.quantity }} €</td>
+						<td>
+							<button class="btn btn-danger btn-sm" @click="removeItem(item.id)">Retirer</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p class="text-end fw-bold">Total : {{ Object.values(cart).reduce((t, i) => t + i.price * i.quantity, 0) }} €</p>
+
+			<div class="d-flex justify-content-between">
+				<button class="btn btn-outline-secondary btn-sm" @click="clearCart">Vider le panier</button>
+				<button class="btn btn-primary" @click="goToOrdersNew">Passer la commande</button>
 			</div>
-		</div>
+		</template>
 	</div>
 </template>

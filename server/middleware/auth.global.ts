@@ -26,9 +26,16 @@ export default defineEventHandler(async (event) => {
 		return;
 	}
 
-	// Tout ce qui n'est pas public → login requis
+	// Tout ce qui n'est pas public → login requis + user toujours existant en BDD
 	if (!isPublic) {
 		const session = await requireUserSession(event).catch(() => null);
 		if (!session?.user) return sendRedirect(event, "/auth/signin", 302);
+
+		// Vérification existence utilisateur en BDD
+		const { PrismaClient } = await import("@prisma/client");
+		const prisma = new PrismaClient();
+		const userDb = await prisma.user.findUnique({ where: { id: Number(session.user.id) } }).catch(() => null);
+		await prisma.$disconnect();
+		if (!userDb) return sendRedirect(event, "/auth/signin", 302);
 	}
 });
