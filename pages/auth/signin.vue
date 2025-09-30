@@ -12,8 +12,7 @@ async function handleLogin() {
 			body: { email: email.value, password: password.value },
 		});
 		if (res?.ok) {
-			await navigateTo('/')
-			if (typeof window !== "undefined") window.location.reload();
+			navigateTo("/", { external: true });
 		} else {
 			error.value = "Email ou mot de passe invalide";
 		}

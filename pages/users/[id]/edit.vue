@@ -24,9 +24,8 @@ async function handleSubmit() {
     errors.value = [err.message]
   })
   if (!errors.value.length) {
-    // Redirection puis rechargement
-    await router.push(`/users/${route.params.id}`);
-    if (typeof window !== "undefined") window.location.reload();
+    // Redirection avec rechargement
+		window.location.href = `/users/${route.params.id}`
   }
 }
 </script>

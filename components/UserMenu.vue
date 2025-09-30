@@ -4,8 +4,7 @@ const { loggedIn, user, clear } = useUserSession();
 async function logout() {
 	await $fetch("/api/auth/logout", { method: "POST" });
 	await clear();
-	await navigateTo('/')
-	if (typeof window !== "undefined") window.location.reload();
+	navigateTo("/", { external: true })
 }
 </script>
 
