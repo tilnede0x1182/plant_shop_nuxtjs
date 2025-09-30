@@ -35,7 +35,9 @@ async function deleteUser(userId: number) {
 			<tbody>
 				<tr v-for="user in users" :key="user.id">
 					<td>
-						<NuxtLink :to="`/admin/users/${user.id}`">{{ user.name || "-" }}</NuxtLink>
+						<NuxtLink :to="`/admin/users/${user.id}`" class="text-body text-decoration-none" style="cursor: pointer">
+							{{ user.name }}
+						</NuxtLink>
 					</td>
 					<td>{{ user.email }}</td>
 					<td>

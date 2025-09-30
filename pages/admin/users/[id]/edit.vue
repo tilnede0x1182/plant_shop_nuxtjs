@@ -24,7 +24,7 @@ async function handleSubmit() {
       admin: !!form.value.admin
     }
   }
-  router.push(`/admin/users/${route.params.id}`)
+  window.location.href = "/admin/users"
 }
 </script>
 
