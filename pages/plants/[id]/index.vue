@@ -24,32 +24,29 @@ async function deletePlant() {
 </script>
 
 <template>
-	<div v-if="plant" class="card shadow-lg mt-4" style="max-width:700px; margin:auto;">
-		<div class="card-body">
-			<h1 class="card-title">{{ plant.name }}</h1>
-			<p><strong>Prix :</strong> {{ plant.price }} €</p>
-			<p><strong>Description :</strong> {{ plant.description }}</p>
-			<p v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }} unités</p>
-			<div class="d-flex flex-wrap gap-2 mb-2">
-				<button class="btn btn-success" @click="addToCart(plant)">
-					Ajouter au panier
-				</button>
-				<NuxtLink v-if="isAdmin" :to="`/admin/plants/${plant.id}/edit`" class="btn btn-warning">
-					Modifier
-				</NuxtLink>
-				<button
-					v-if="isAdmin"
-					type="button"
-					class="btn btn-danger"
-					@click="deletePlant"
-				>
-					Supprimer
-				</button>
-			</div>
-			<div class="mt-3">
-				<NuxtLink to="/plants" class="btn btn-secondary">
-					Retour à la liste
-				</NuxtLink>
+	<div v-if="plant" class="container mt-4">
+		<div class="card shadow-lg">
+			<div class="card-body">
+				<h1 class="card-title">{{ plant.name }}</h1>
+				<p><strong>Prix :</strong> {{ plant.price }} €</p>
+				<p><strong>Description :</strong> {{ plant.description }}</p>
+				<p v-if="isAdmin"><strong>Stock :</strong> {{ plant.stock }} unités</p>
+				<div class="d-flex flex-wrap gap-2 mb-2">
+					<button class="btn btn-success" @click="addToCart(plant)">
+						Ajouter au panier
+					</button>
+					<NuxtLink v-if="isAdmin" :to="`/admin/plants/${plant.id}/edit`" class="btn btn-warning">
+						Modifier
+					</NuxtLink>
+					<button v-if="isAdmin" type="button" class="btn btn-danger" @click="deletePlant">
+						Supprimer
+					</button>
+				</div>
+				<div class="mt-3">
+					<NuxtLink to="/plants" class="btn btn-secondary">
+						Retour à la liste
+					</NuxtLink>
+				</div>
 			</div>
 		</div>
 	</div>
